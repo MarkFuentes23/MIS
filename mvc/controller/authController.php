@@ -13,7 +13,7 @@ class authController extends Controller {
     public function login(){
         session_start();
         if(isset($_SESSION['user'])){
-            header("Location: /main/index");
+            header("Location: /main/dashboard");
             exit();
         }
         
@@ -24,7 +24,7 @@ class authController extends Controller {
             $user = $this->authModel->login($username, $password);
             if($user){
                 $_SESSION['user'] = $user;
-                header("Location: /main/index");
+                header("Location: /main/dashboard");
                 exit();
             } else {
                 $data['error'] = "Invalid username or password.";

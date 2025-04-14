@@ -15,6 +15,7 @@
         <label>Password:</label>
         <input type="password" name="password" required><br/>
         <button type="submit">Login</button>
+        <p class="mt-3">Dont have account? <a href="/auth/register">Register here</a></p>
     </form>
 </body>
 </html>
