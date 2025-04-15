@@ -10,7 +10,6 @@ class Index {
         new Route($url);
     }
 }
-
-$url = isset($_GET['url']) ? $_GET['url'] : 'auth/login';
+$url = isset($_GET['url']) ? $_GET['url'] : 'auth';
 new Index($url);
 ?>

@@ -9,9 +9,17 @@ class mainController extends Controller {
             header("Location: /auth/login");
             exit();
         }
-        // Pagkatapos mag-login, idirekta ang user papunta sa listahan ng evaluations
-        header("Location: /evaluation/listRecords");
+        header("Location: /main/dashboard");
         exit();
+    }
+
+    public function dashboard(){
+        session_start();
+        if(!isset($_SESSION['user'])){
+            header("Location: /auth/login");
+            exit();
+        }
+        $this->view->views('Dashboard'); 
     }
 }
 ?>

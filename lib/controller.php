@@ -1,15 +1,16 @@
 <?php
 namespace lib;
+
 use lib\View;
 use lib\Models;
 
 class Controller {
-    protected $render;
-    protected $run;
+    protected $view;
+    protected $models;
 
     public function __construct(){
-        $this->render = new View();
-        $this->run = new Models();
+        $this->view = new View();
+        $this->models = new Models();
     }
 }
 ?>

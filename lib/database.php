@@ -5,7 +5,6 @@ class Database {
     private static $instance = null;
     private $conn;
 
-    // Bagong database name: bci_ibsc
     private $host = "localhost";
     private $user = "root";    
     private $pass = "";    

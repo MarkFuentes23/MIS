@@ -1,20 +1,28 @@
 <?php
-require_once 'lib/database.php';
-use lib\Database;
-
 class authModel {
     private $db;
-    
+
     public function __construct(){
-        $this->db = Database::getInstance()->getConnection();
+        $this->db = \lib\Database::getInstance()->getConnection();
     }
-    
-    // Function para sa secure na pag-login (ginagamit ang prepared statements at password_verify)
+
+    public function register($username, $password){
+        $stmt = $this->db->prepare("SELECT id FROM users WHERE username = ?");
+        $stmt->execute([$username]);
+        if ($stmt->fetch()) {
+            return false;
+        }
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = $this->db->prepare("INSERT INTO users (username, password) VALUES (?, ?)");
+        return $stmt->execute([$username, $hashedPassword]);
+    }
+
     public function login($username, $password){
         $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ?");
         $stmt->execute([$username]);
         $user = $stmt->fetch(\PDO::FETCH_ASSOC);
-        if($user && password_verify($password, $user['password'])){
+        if ($user && password_verify($password, $user['password'])) {
+            unset($user['password']);
             return $user;
         }
         return false;

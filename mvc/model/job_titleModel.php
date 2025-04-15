@@ -1,14 +1,9 @@
 <?php
-require_once 'lib/database.php';
-use lib\Database;
-
-class jobTitleModel {
+class job_titleModel {
     private $db;
-    
     public function __construct(){
-        $this->db = Database::getInstance()->getConnection();
+        $this->db = \lib\Database::getInstance()->getConnection();
     }
-    
     public function getAll(){
         $stmt = $this->db->prepare("SELECT * FROM job_titles");
         $stmt->execute();

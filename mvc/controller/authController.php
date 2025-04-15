@@ -1,40 +1,61 @@
 <?php
-require_once 'lib/controller.php';
-use lib\Controller;
-
-class authController extends Controller {
+class authController extends \lib\Controller {
     private $authModel;
-    
+
     public function __construct(){
-        parent::__construct();
-        $this->authModel = $this->run->models('authModel');
+        parent::__construct(); 
+        $this->authModel = $this->models->models('authModel');
     }
-    
-    public function login(){
-        session_start();
-        if(isset($_SESSION['user'])){
-            header("Location: /main/dashboard");
-            exit();
-        }
-        
+
+    public function register(){
         if ($_SERVER['REQUEST_METHOD'] == 'POST'){
-            $username = $_POST['username'] ?? '';
-            $password = $_POST['password'] ?? '';
-            
-            $user = $this->authModel->login($username, $password);
-            if($user){
-                $_SESSION['user'] = $user;
-                header("Location: /main/dashboard");
+            $username = trim($_POST['username']);
+            $password = trim($_POST['password']);
+
+            $result = $this->authModel->register($username, $password);
+            if ($result){
+                header("Location: /auth/login");
                 exit();
             } else {
-                $data['error'] = "Invalid username or password.";
-                $this->render->views('login', $data);
+                $data = "Registration failed. Please try again.";
+                $this->view->views('register', ['error' => $data]);
             }
         } else {
-            $this->render->views('login');
+            $this->view->views('register');
         }
     }
-    
+
+    public function login(){
+        if ($_SERVER['REQUEST_METHOD'] == 'POST'){
+            $username = trim($_POST['username']);
+            $password = trim($_POST['password']);
+
+            $user = $this->authModel->login($username, $password);
+            if ($user){
+                session_start();
+                session_regenerate_id(true);
+                $_SESSION['user'] = $user;
+                header("Location: /auth/dashboard");
+                exit();
+            } else {
+                $data = "Login failed. Check your credentials.";
+                $this->view->views('login', ['error' => $data]);
+            }
+        } else {
+            $this->view->views('login');
+        }
+    }
+
+    public function dashboard(){
+        session_start();
+        if (!isset($_SESSION['user'])){
+            header("Location: /auth/login");
+            exit();
+        }
+        $data = $_SESSION['user'];
+        $this->view->views('Dashboard', ['user' => $data]);
+    }
+
     public function logout(){
         session_start();
         session_destroy();
