@@ -1,0 +1,51 @@
+
+    <!-- End of Footer -->
+    
+    </div>
+    <!-- End of Content Wrapper -->
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
+    
+    <!-- Chart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.8/dist/sweetalert2.all.min.js"></script>
+    
+    <!-- Initialize DataTables -->
+    <script>
+        $(document).ready(function() {
+            $('.data-table').DataTable();
+        });
+    </script>
+    
+    <!-- Process Flash Messages with SweetAlert -->
+    <?php if (isset($_SESSION['flash'])) : ?>
+        <script>
+            Swal.fire({
+                title: "<?= $_SESSION['flash']['title'] ?>",
+                text: "<?= $_SESSION['flash']['message'] ?>",
+                icon: "<?= $_SESSION['flash']['type'] ?>",
+                confirmButtonColor: '#4e73df'
+            });
+        </script>
+        <?php unset($_SESSION['flash']); ?>
+    <?php endif; ?>
+    
+    <!-- Custom scripts for specific pages -->
+    <?php if (isset($pageScripts) && is_array($pageScripts)) : ?>
+        <?php foreach ($pageScripts as $script) : ?>
+            <script src="<?= $script ?>"></script>
+        <?php endforeach; ?>
+    <?php endif; ?>
+    
+</body>
+</html>

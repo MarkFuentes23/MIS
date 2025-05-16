@@ -1,10 +1,8 @@
 <?php
-namespace lib;
-
-class Models {
-    public function models($filename){
-        require_once 'mvc/model/' . $filename . '.php';
-        return new $filename();
+class Model {
+    protected $db;
+    
+    public function __construct(){
+        $this->db = Database::getInstance()->getConnection();
     }
 }
-?>

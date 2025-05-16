@@ -1,0 +1,113 @@
+
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap'); 
+
+body {
+  font-family: 'Poppins', sans-serif;
+}
+.bg-gradient-primary-to-secondary { 
+  background: black; 
+} 
+
+/* Button Styles */
+.btn-outline-primary, .btn-outline-danger { 
+  border-width: 1px; 
+  transition: all 0.2s;
+  font-family: 'Poppins', sans-serif;
+} 
+
+.btn-outline-primary:hover { 
+  background-color: rgba(78, 115, 223, 0.1); 
+} 
+
+.btn-outline-danger:hover { 
+  background-color: rgba(231, 74, 59, 0.1); 
+} 
+
+/* Table Styles */
+#employeesTable, 
+#jobTitlesTable, 
+#departmentsTable, 
+#locationsTable,
+#kraTable { 
+  border-collapse: separate; 
+  border-spacing: 0; 
+  font-family: 'Poppins', sans-serif; 
+  font-size: 0.8rem;
+  width: 100%;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  border-radius: 8px;
+  overflow: hidden;
+} 
+
+#employeesTable thead th, 
+#jobTitlesTable thead th, 
+#departmentsTable thead th, 
+#locationsTable thead th,
+#kraTable thead th {
+  background-color: #f8f9fc;
+  border-bottom: 2px solid #e3e6f0;
+  padding: 0.75rem;
+  font-weight: 600;
+  color: #5a5c69;
+}
+
+#employeesTable tbody tr, 
+#jobTitlesTable tbody tr, 
+#departmentsTable tbody tr, 
+#locationsTable tbody tr,
+#kraTable tbody tr {
+  border-bottom: 1px solid #e3e6f0;
+  transition: all 0.2s;
+}
+
+#employeesTable tbody tr:hover, 
+#jobTitlesTable tbody tr:hover, 
+#departmentsTable tbody tr:hover, 
+#locationsTable tbody tr:hover,
+#kraTable tbody tr:hover { 
+  background-color: rgba(78, 115, 223, 0.05); 
+} 
+
+#employeesTable tbody td, 
+#jobTitlesTable tbody td, 
+#departmentsTable tbody td, 
+#locationsTable tbody td,
+#kraTable tbody td {
+  padding: 0.75rem;
+  vertical-align: middle;
+}
+
+
+.dataTables_length label,
+.dataTables_filter label,
+.dataTables_info,
+.dataTables_paginate .paginate_button {
+font-size: 0.75rem !important;
+margin: 10px;
+}
+.dataTables_length select,
+.dataTables_filter input {
+font-size: 0.75rem !important;
+height: calc(1.5em + .5rem) !important;
+}
+
+/* Table header and cell font-size */
+table.table-sm thead th,
+table.table-sm tbody td,
+#kraTable thead th,
+#kraTable tbody td {
+font-size: 0.75rem;
+padding: 0.3rem 0.5rem;
+font-family: 'poppins', Courier, monospace  !important; 
+}
+
+/* Only Previous/Next */
+div.dataTables_wrapper div.dataTables_paginate ul.pagination li.page-item .page-link {
+font-size: 0.75rem !important;        /* smaller text */
+padding: 0.25rem 0.5rem !important;   /* tighter buttons */
+min-width: auto !important;           /* let the width shrink to content */
+line-height: 1.2 !important;          /* center text vertically */
+}
+
