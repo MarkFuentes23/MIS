@@ -168,7 +168,7 @@ class ScoreCardController extends Controller {
                     'evidence' => $_POST['evidence'] ?? null
                 ];
                 
-                // Update goal
+                // Update goal using the dedicated update function
                 $result = $this->scoreCardModel->updateGoal($goalId, $goalData);
                 
                 if ($result) {

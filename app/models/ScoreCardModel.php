@@ -25,36 +25,14 @@ class ScoreCardModel extends Model {
         return $scorecard;
     }
     
-    // Save or update a goal
+    // Save a new goal
     public function saveGoal($scorecardId, $kraId, $perspective, $goalData) {
         $sql = "INSERT INTO scorecard_goals 
                 (scorecard_id, kra_id, perspective, goal, measurement, weight, target, rating_period,
                  jan_value, feb_value, mar_value, apr_value, may_value, jun_value,
                  jul_value, aug_value, sep_value, oct_value, nov_value, dec_value,
                  rating, evidence) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE
-                goal = VALUES(goal),
-                measurement = VALUES(measurement),
-                weight = VALUES(weight),
-                target = VALUES(target),
-                rating_period = VALUES(rating_period),
-                jan_value = VALUES(jan_value),
-                feb_value = VALUES(feb_value),
-                mar_value = VALUES(mar_value),
-                apr_value = VALUES(apr_value),
-                may_value = VALUES(may_value),
-                jun_value = VALUES(jun_value),
-                jul_value = VALUES(jul_value),
-                aug_value = VALUES(aug_value),
-                sep_value = VALUES(sep_value),
-                oct_value = VALUES(oct_value),
-                nov_value = VALUES(nov_value),
-                dec_value = VALUES(dec_value),
-                rating = VALUES(rating),
-                evidence = VALUES(evidence)";
-        
-        $stmt = $this->db->prepare($sql);
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         $params = [
             $scorecardId,
@@ -81,11 +59,12 @@ class ScoreCardModel extends Model {
             $goalData['evidence'] ?? null
         ];
         
+        $stmt = $this->db->prepare($sql);
         $result = $stmt->execute($params);
         
         if ($result) {
-            // Calculate and update score
-            $goalId = $this->db->lastInsertId() ?: $this->getGoalId($scorecardId, $kraId, $goalData['goal']);
+            // Get the newly inserted goal ID
+            $goalId = $this->db->lastInsertId();
             $this->updateGoalScore($goalId);
             return $goalId;
         }
@@ -184,17 +163,29 @@ class ScoreCardModel extends Model {
         $stmt = $this->db->prepare("DELETE FROM scorecard_goals WHERE id = ?");
         return $stmt->execute([$goalId]);
     }
-
-
-    
     
     // Update goal by ID
     public function updateGoal($goalId, $goalData) {
         $sql = "UPDATE scorecard_goals SET 
-                goal = ?, measurement = ?, weight = ?, target = ?, rating_period = ?,
-                jan_value = ?, feb_value = ?, mar_value = ?, apr_value = ?, may_value = ?, jun_value = ?,
-                jul_value = ?, aug_value = ?, sep_value = ?, oct_value = ?, nov_value = ?, dec_value = ?,
-                rating = ?, evidence = ?
+                goal = ?, 
+                measurement = ?, 
+                weight = ?, 
+                target = ?, 
+                rating_period = ?,
+                jan_value = ?, 
+                feb_value = ?, 
+                mar_value = ?, 
+                apr_value = ?, 
+                may_value = ?, 
+                jun_value = ?,
+                jul_value = ?, 
+                aug_value = ?, 
+                sep_value = ?, 
+                oct_value = ?, 
+                nov_value = ?, 
+                dec_value = ?,
+                rating = ?, 
+                evidence = ?
                 WHERE id = ?";
         
         $params = [
@@ -220,12 +211,14 @@ class ScoreCardModel extends Model {
             $goalId
         ];
         
-        $result = $this->db->prepare($sql)->execute($params);
+        $stmt = $this->db->prepare($sql);
+        $result = $stmt->execute($params);
         
         if ($result) {
             $this->updateGoalScore($goalId);
+            return true;
         }
         
-        return $result;
+        return false;
     }
 }

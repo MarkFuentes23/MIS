@@ -112,8 +112,14 @@
                         <button type="button" class="btn btn-sm btn-danger remove-goal-btn" style="padding: 2px 5px; font-size: 8px;">
                             <i class="fas fa-minus"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-primary save-goal-btn" style="padding:2px 5px;font-size:8px;" title="Save Goal" onclick="confirmSaveGoal()">
-                            save
+                        <button type="button" class="btn btn-sm btn-primary save-goal-btn" style="padding:2px 5px;font-size:8px;" title="Save Goal">
+                            Save
+                        </button>
+                        <button type="button" class="btn btn-sm btn-warning edit-goal-btn" style="padding:2px 5px;font-size:8px; display:none;" title="Edit Goal">
+                            Edit
+                        </button>
+                        <button type="button" class="btn btn-sm btn-success update-goal-btn" style="padding:2px 5px;font-size:8px; display:none;" title="Update Goal">
+                            Update
                         </button>
                     </div>
                 </td>
@@ -164,8 +170,14 @@
                         <button type="button" class="btn btn-sm btn-danger remove-goal-btn" style="padding: 2px 5px; font-size: 8px;">
                             <i class="fas fa-minus"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-primary save-goal-btn" style="padding:2px 5px;font-size:8px;">
-                        save
+                        <button type="button" class="btn btn-sm btn-primary save-goal-btn" style="padding:2px 5px;font-size:8px;" title="Save Goal">
+                            Save
+                        </button>
+                        <button type="button" class="btn btn-sm btn-warning edit-goal-btn" style="padding:2px 5px;font-size:8px; display:none;" title="Edit Goal">
+                            Edit
+                        </button>
+                        <button type="button" class="btn btn-sm btn-success update-goal-btn" style="padding:2px 5px;font-size:8px; display:none;" title="Update Goal">
+                            Update
                         </button>
                     </div>
                 </td>
