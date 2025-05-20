@@ -1,223 +1,231 @@
 <?php
 class ScoreCardController extends Controller {
     private $scoreCardModel;
-
+    
     public function __construct() {
         parent::__construct();
         $this->scoreCardModel = $this->model('ScoreCardModel');
     }
-
+    
     // Main scorecard form view
     public function index() {
         $this->isAuthenticated();
         
-        // Get all employees for dropdown
+        // Get all employees and KRAs for dropdowns
         $employees = $this->scoreCardModel->getAllEmployees();
+        $kras = $this->scoreCardModel->getAllKras();
         
-        $this->view->render('scorecard/index', [
-            'employees' => $employees
+        $this->view->render('scorecard/view', [
+            'employees' => $employees,
+            'kras' => $kras
         ]);
     }
     
-    // Get employee data for form
+    // Get employee data via AJAX
     public function getEmployeeData() {
-        $this->isAuthenticated();
-        
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['employee_id'])) {
-            $employeeId = $_POST['employee_id'];
-            $employeeData = $this->scoreCardModel->getEmployeeById($employeeId);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $employeeId = $_POST['employee_id'] ?? null;
             
-            if ($employeeData) {
-                // Check if the employee already has an evaluation form
-                $existingForm = $this->scoreCardModel->getEvaluationByEmployeeId($employeeId);
+            if ($employeeId) {
+                $employee = $this->scoreCardModel->getEmployeeById($employeeId);
                 
-                if ($existingForm) {
-                    // Get KRA data for each category
-                    $financialData = $this->scoreCardModel->getKRAData($existingForm['id'], 1); // 1 = Financial
-                    $strategicData = $this->scoreCardModel->getKRAData($existingForm['id'], 2); // 2 = Strategic
-                    $operationalData = $this->scoreCardModel->getKRAData($existingForm['id'], 3); // 3 = Operational
-                    $learningData = $this->scoreCardModel->getKRAData($existingForm['id'], 4); // 4 = Learning
+                if ($employee) {
+                    echo json_encode([
+                        'status' => 'success',
+                        'data' => $employee
+                    ]);
+                } else {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Employee not found'
+                    ]);
+                }
+            } else {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Employee ID is required'
+                ]);
+            }
+        }
+        exit;
+    }
+    
+    // Get KRAs for dropdown
+    public function getKras() {
+        $kras = $this->scoreCardModel->getAllKras();
+        echo json_encode([
+            'status' => 'success',
+            'data' => $kras
+        ]);
+        exit;
+    }
+    
+    // Save goal via AJAX
+    public function saveGoal() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
+                // Get employee scorecard data
+                $employeeId = $_POST['employee_id'] ?? null;
+                $evaluationPeriod = $_POST['evaluation_period'] ?? date('Y');
+                $positionTitle = $_POST['position_title'] ?? '';
+                $department = $_POST['department'] ?? '';
+                $reviewer = $_POST['reviewer'] ?? '';
+                $reviewerDesignation = $_POST['reviewer_designation'] ?? '';
+                $perspective = $_POST['perspective'] ?? 'financial';
+                
+                if (!$employeeId) {
+                    throw new Exception('Employee ID is required');
+                }
+                
+                // Get or create scorecard
+                $scorecard = $this->scoreCardModel->getOrCreateScorecard(
+                    $employeeId, $evaluationPeriod, $positionTitle, 
+                    $department, $reviewer, $reviewerDesignation
+                );
+                
+                // Prepare goal data
+                $goalData = [
+                    'goal' => $_POST['goal'] ?? '',
+                    'measurement' => $_POST['measurement'] ?? 'Savings',
+                    'weight' => $_POST['weight'] ?? 0,
+                    'target' => $_POST['target'] ?? '',
+                    'period' => $_POST['period'] ?? 'Annual',
+                    'jan' => $_POST['jan'] ?? null,
+                    'feb' => $_POST['feb'] ?? null,
+                    'mar' => $_POST['mar'] ?? null,
+                    'apr' => $_POST['apr'] ?? null,
+                    'may' => $_POST['may'] ?? null,
+                    'jun' => $_POST['jun'] ?? null,
+                    'jul' => $_POST['jul'] ?? null,
+                    'aug' => $_POST['aug'] ?? null,
+                    'sep' => $_POST['sep'] ?? null,
+                    'oct' => $_POST['oct'] ?? null,
+                    'nov' => $_POST['nov'] ?? null,
+                    'dec' => $_POST['dec'] ?? null,
+                    'rating' => $_POST['rating'] ?? null,
+                    'evidence' => $_POST['evidence'] ?? null
+                ];
+                
+                $kraId = $_POST['kra_id'] ?? null;
+                
+                if (!$kraId) {
+                    throw new Exception('KRA is required');
+                }
+                
+                // Save goal
+                $goalId = $this->scoreCardModel->saveGoal($scorecard['id'], $kraId, $perspective, $goalData);
+                
+                if ($goalId) {
+                    echo json_encode([
+                        'status' => 'success',
+                        'message' => 'Goal saved successfully',
+                        'goal_id' => $goalId
+                    ]);
+                } else {
+                    throw new Exception('Failed to save goal');
+                }
+                
+            } catch (Exception $e) {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => $e->getMessage()
+                ]);
+            }
+        }
+        exit;
+    }
+    
+    // Update goal via AJAX
+    public function updateGoal() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
+                $goalId = $_POST['goal_id'] ?? null;
+                
+                if (!$goalId) {
+                    throw new Exception('Goal ID is required');
+                }
+                
+                // Prepare goal data
+                $goalData = [
+                    'goal' => $_POST['goal'] ?? '',
+                    'measurement' => $_POST['measurement'] ?? 'Savings',
+                    'weight' => $_POST['weight'] ?? 0,
+                    'target' => $_POST['target'] ?? '',
+                    'period' => $_POST['period'] ?? 'Annual',
+                    'jan' => $_POST['jan'] ?? null,
+                    'feb' => $_POST['feb'] ?? null,
+                    'mar' => $_POST['mar'] ?? null,
+                    'apr' => $_POST['apr'] ?? null,
+                    'may' => $_POST['may'] ?? null,
+                    'jun' => $_POST['jun'] ?? null,
+                    'jul' => $_POST['jul'] ?? null,
+                    'aug' => $_POST['aug'] ?? null,
+                    'sep' => $_POST['sep'] ?? null,
+                    'oct' => $_POST['oct'] ?? null,
+                    'nov' => $_POST['nov'] ?? null,
+                    'dec' => $_POST['dec'] ?? null,
+                    'rating' => $_POST['rating'] ?? null,
+                    'evidence' => $_POST['evidence'] ?? null
+                ];
+                
+                // Update goal
+                $result = $this->scoreCardModel->updateGoal($goalId, $goalData);
+                
+                if ($result) {
+                    echo json_encode([
+                        'status' => 'success',
+                        'message' => 'Goal updated successfully'
+                    ]);
+                } else {
+                    throw new Exception('Failed to update goal');
+                }
+                
+            } catch (Exception $e) {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => $e->getMessage()
+                ]);
+            }
+        }
+        exit;
+    }
+    
+    // Load existing goals for an employee
+    public function loadGoals() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
+                $employeeId = $_POST['employee_id'] ?? null;
+                $evaluationPeriod = $_POST['evaluation_period'] ?? date('Y');
+                $perspective = $_POST['perspective'] ?? 'financial';
+                
+                if (!$employeeId) {
+                    throw new Exception('Employee ID is required');
+                }
+                
+                // Get scorecard
+                $scorecard = $this->scoreCardModel->getScorecardByEmployee($employeeId, $evaluationPeriod);
+                
+                if ($scorecard) {
+                    // Get goals for this perspective
+                    $goals = $this->scoreCardModel->getGoalsByScorecard($scorecard['id'], $perspective);
                     
                     echo json_encode([
                         'status' => 'success',
-                        'employee' => $employeeData,
-                        'evaluation' => $existingForm,
-                        'kra_data' => [
-                            'financial' => $financialData,
-                            'strategic' => $strategicData,
-                            'operational' => $operationalData,
-                            'learning' => $learningData
-                        ]
+                        'data' => $goals
                     ]);
                 } else {
                     echo json_encode([
                         'status' => 'success',
-                        'employee' => $employeeData,
-                        'evaluation' => null,
-                        'kra_data' => null
+                        'data' => []
                     ]);
                 }
-            } else {
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'Employee not found'
-                ]);
-            }
-        } else {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Invalid request'
-            ]);
-        }
-        exit;
-    }
-    
-    // Save or create evaluation form
-    public function saveEvaluation() {
-        $this->isAuthenticated();
-        
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $employeeId = $_POST['employee_id'];
-            $reviewerId = $_POST['reviewer_id'] ?? null;
-            $reviewerDesignation = $_POST['reviewer_designation'] ?? null;
-            
-            // Create or update evaluation form record
-            $evaluationId = $this->scoreCardModel->saveEvaluationForm($employeeId, $reviewerId, $reviewerDesignation);
-            
-            if ($evaluationId) {
-                echo json_encode([
-                    'status' => 'success',
-                    'message' => 'Evaluation form saved successfully',
-                    'evaluation_id' => $evaluationId
-                ]);
-            } else {
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'Failed to save evaluation form'
-                ]);
-            }
-        } else {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Invalid request'
-            ]);
-        }
-        exit;
-    }
-    
-    // Lock a KRA category section
-    public function lockKRASection() {
-        $this->isAuthenticated();
-        
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $evaluationId = $_POST['evaluation_id'];
-            $categoryId = $_POST['category_id'];
-            $kraData = json_decode($_POST['kra_data'], true);
-            
-            // Delete existing records for this evaluation and category
-            $this->scoreCardModel->deleteKRAData($evaluationId, $categoryId);
-            
-            // Insert new KRA data
-            $success = true;
-            foreach ($kraData as $kra) {
-                $result = $this->scoreCardModel->saveKRAData(
-                    $evaluationId, 
-                    $categoryId,
-                    $kra['kra_type'],
-                    $kra['goal'],
-                    $kra['measurement'],
-                    $kra['weight'],
-                    $kra['target'],
-                    $kra['rating_period'],
-                    $kra['jan'] ?? null,
-                    $kra['feb'] ?? null,
-                    $kra['mar'] ?? null,
-                    $kra['apr'] ?? null,
-                    $kra['may'] ?? null,
-                    $kra['jun'] ?? null,
-                    $kra['jul'] ?? null,
-                    $kra['aug'] ?? null,
-                    $kra['sep'] ?? null,
-                    $kra['oct'] ?? null,
-                    $kra['nov'] ?? null,
-                    $kra['dec'] ?? null,
-                    $kra['rating'] ?? null,
-                    $kra['score'] ?? null,
-                    $kra['evidence'] ?? null,
-                    true // locked
-                );
                 
-                if (!$result) {
-                    $success = false;
-                }
-            }
-            
-            // Update evaluation score
-            $totalScore = $this->scoreCardModel->calculateTotalScore($evaluationId);
-            $this->scoreCardModel->updateEvaluationScore($evaluationId, $totalScore);
-            
-            if ($success) {
-                echo json_encode([
-                    'status' => 'success',
-                    'message' => 'KRA section locked successfully',
-                    'total_score' => $totalScore
-                ]);
-            } else {
+            } catch (Exception $e) {
                 echo json_encode([
                     'status' => 'error',
-                    'message' => 'Failed to lock KRA section'
+                    'message' => $e->getMessage()
                 ]);
             }
-        } else {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Invalid request'
-            ]);
-        }
-        exit;
-    }
-    
-    // Final submission of the entire evaluation
-    public function submitEvaluation() {
-        $this->isAuthenticated();
-        
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $evaluationId = $_POST['evaluation_id'];
-            
-            // Check if all sections are locked
-            $allLocked = $this->scoreCardModel->checkAllSectionsLocked($evaluationId);
-            
-            if (!$allLocked) {
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'All KRA sections must be locked before submission'
-                ]);
-                exit;
-            }
-            
-            // Calculate final score
-            $totalScore = $this->scoreCardModel->calculateTotalScore($evaluationId);
-            
-            // Update evaluation with final score
-            $result = $this->scoreCardModel->finalizeEvaluation($evaluationId, $totalScore);
-            
-            if ($result) {
-                echo json_encode([
-                    'status' => 'success',
-                    'message' => 'Evaluation submitted successfully',
-                    'total_score' => $totalScore
-                ]);
-            } else {
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'Failed to submit evaluation'
-                ]);
-            }
-        } else {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Invalid request'
-            ]);
         }
         exit;
     }

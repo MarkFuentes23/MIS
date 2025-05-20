@@ -1,40 +1,4 @@
 
-    $(document).ready(function() {
-        // When employee is selected from dropdown
-        $('#employee_select').change(function() {
-            var employeeId = $(this).val();
-            
-            if (employeeId) {
-                // Get employee data via AJAX
-                $.ajax({
-                    url: '/form/getEmployeeData',
-                    type: 'POST',
-                    data: {
-                        employee_id: employeeId
-                    },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.status === 'success') {
-                            var employee = response.data;
-                            
-                            // Populate the form fields
-                            $('#job_title').val(employee.job_title.toUpperCase());
-                            $('#department').val(employee.department.toUpperCase());
-                        } else {
-                            alert('Error: ' + response.message);
-                        }
-                    },
-                    error: function() {
-                        alert('Error: Failed to fetch employee data');
-                    }
-                });
-            } else {
-                // Clear form fields if no employee selected
-                $('#job_title').val('');
-                $('#department').val('');
-            }
-        });
-    });
 // start of collapsible
     var coll = document.getElementsByClassName("collapsible");
     var i;
@@ -52,7 +16,7 @@
     }
     // end collapsible
 
-// financial
+// start of scorecard
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize all KRA sections
     initializeKRASection('goalBody', 'weightTotal', 'scoreTotal', 'addKRABtn', 'removeKRABtn', 'kraRowTemplate', 'goalRowTemplate');
@@ -336,29 +300,223 @@ document.addEventListener('DOMContentLoaded', function() {
         addKRASection();
     }
 });
-// end of financial
+// end of scorecard
 
-$(document).ready(function() {
-    // Load KRAs for dropdown
-    $.ajax({
-        url: '<?php echo BASE_URL; ?>form/getKras',
-        type: 'GET',
-        dataType: 'json',
-        success: function(response) {
-            if (response.status === 'success') {
-                var kraDropdown = $('select[name="kra"]');
-                kraDropdown.empty();
-                kraDropdown.append('<option value="">Select KRA</option>');
-                
-                $.each(response.data, function(index, kra) {
-                    kraDropdown.append('<option value="' + kra.id + '">' + kra.kra + '</option>');
-                });
-            } else {
-                console.error('Error loading KRAs:', response.message);
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('AJAX error:', error);
+// employee auto populate
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the employee select dropdown
+    const employeeSelect = document.getElementById('employee_select');
+    
+    // Add change event listener
+    employeeSelect.addEventListener('change', function() {
+        const employeeId = this.value;
+        
+        if (employeeId) {
+            // Create form data for the AJAX request
+            const formData = new FormData();
+            formData.append('employee_id', employeeId);
+            
+            // Send AJAX request to get employee data
+            fetch('/scorecard/getEmployeeData', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Fill in the job title and department fields
+                    document.getElementById('job_title').value = data.data.job_title || '';
+                    document.getElementById('department').value = data.data.department || '';
+                } else {
+                    console.error('Error:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching employee data:', error);
+            });
+        } else {
+            // Clear the fields if no employee is selected
+            document.getElementById('job_title').value = '';
+            document.getElementById('department').value = '';
         }
     });
+});
+//  employee auto populate end
+
+
+// financial save button 
+$(document).ready(function() {
+    // Handle save button click for all rows (including dynamically added ones)
+    $(document).on('click', '.save-goal-btn', function() {
+        let $btn = $(this);
+        let $row = $btn.closest('tr');
+        
+        // If button is in edit mode, switch to save mode
+        if ($btn.hasClass('btn-warning')) {
+            $row.find('input, select').prop('disabled', false);
+            $btn.text('Save')
+                .removeClass('btn-warning')
+                .addClass('btn-primary');
+            return;
+        }
+        
+        // Show confirmation dialog
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "Do you want to save this goal?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, save it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Get goal ID and determine if this is an update or a new goal
+                let goalId = $row.data('goal-id');
+                
+                // Determine if it's a KRA row or goal row
+                let isKraRow = $row.hasClass('kra-row');
+                
+                // Get KRA ID properly based on row type
+                let kraId;
+                if (isKraRow) {
+                    kraId = $row.find('.kra-select').val();
+                } else {
+                    // For goal rows, get KRA ID from the data-kra-id attribute
+                    kraId = $row.data('kra-id');
+                }
+                
+                // Get employee ID
+                let employeeId = $('#employee_select').val();
+                
+                // Validate required fields
+                if (!employeeId) {
+                    Swal.fire('Error', 'Please select an employee first', 'error');
+                    return;
+                }
+                
+                if (!kraId) {
+                    Swal.fire('Error', 'KRA is required', 'error');
+                    return;
+                }
+                
+                // Get position title, department, reviewer, and reviewer designation
+                const positionTitle = $('#job_title').val() || null;
+                const department = $('#department').val() || null;
+                const reviewer = $('#reviewer').val() || null;
+                const reviewerDesignation = $('#reviewer_designation').val() || null;
+                
+                // Collect form data
+                let data = {
+                    employee_id: employeeId,
+                    evaluation_period: $('#evaluation_period').val(),
+                    kra_id: kraId,
+                    position_title: positionTitle,
+                    department: department,
+                    reviewer: reviewer,
+                    reviewer_designation: reviewerDesignation,
+                    goal: $row.find('.goal-input').val(),
+                    measurement: $row.find('.measurement-select').val(),
+                    weight: $row.find('.weight-input').val(),
+                    target: $row.find('.target-input').val(),
+                    period: $row.find('.period-select').val(),
+                    jan: $row.find('input[name="jan"]').val(),
+                    feb: $row.find('input[name="feb"]').val(),
+                    mar: $row.find('input[name="mar"]').val(),
+                    apr: $row.find('input[name="apr"]').val(),
+                    may: $row.find('input[name="may"]').val(),
+                    jun: $row.find('input[name="jun"]').val(),
+                    jul: $row.find('input[name="jul"]').val(),
+                    aug: $row.find('input[name="aug"]').val(),
+                    sep: $row.find('input[name="sep"]').val(),
+                    oct: $row.find('input[name="oct"]').val(),
+                    nov: $row.find('input[name="nov"]').val(),
+                    dec: $row.find('input[name="dec"]').val(),
+                    rating: $row.find('.rating-input').val(),
+                    evidence: $row.find('.evidence-input').val()
+                };
+                
+                // Determine the correct endpoint and add goal_id to data if updating
+                let url = '/scorecard/saveGoal'; // Default for new goals
+                
+                if (goalId) {
+                    url = '/scorecard/updateGoal';
+                    data.goal_id = goalId;
+                }
+                
+                // Send Ajax request
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: data,
+                    dataType: 'json',
+                    success: function(res) {
+                        if (res.status === 'success') {
+                            // Store goal ID for new goals
+                            if (!goalId && res.goal_id) {
+                                $row.attr('data-goal-id', res.goal_id);
+                            }
+                            
+                            // Disable inputs and switch button to edit mode
+                            $row.find('input, select').prop('disabled', true);
+                            $btn.text('Edit')
+                                .removeClass('btn-primary btn-success')
+                                .addClass('btn-warning');
+                                
+                            // Show success message
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Saved!',
+                                text: goalId ? 'Your goal has been updated successfully.' : 'Your goal has been saved successfully.',
+                                showConfirmButton: false,
+                                timer: 1500
+                            });
+                            
+                            // Update the score calculation
+                            updateScore($row);
+                        } else {
+                            Swal.fire('Error', res.message || 'Error saving goal', 'error');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', xhr.responseText);
+                        Swal.fire('Error', 'There was a problem connecting to the server. Please try again.', 'error');
+                    }
+                });
+            }
+        });
+    });
+    
+    // Function to update the score display
+    function updateScore($row) {
+        const weight = parseFloat($row.find('.weight-input').val()) || 0;
+        const rating = parseFloat($row.find('.rating-input').val()) || 0;
+        const period = $row.find('.period-select').val();
+        
+        let divisor = 1; // Default for Annual
+        switch (period) {
+            case 'Semi Annual':
+                divisor = 2;
+                break;
+            case 'Quarterly':
+                divisor = 4;
+                break;
+            case 'Monthly':
+                divisor = 12;
+                break;
+        }
+        
+        if (weight > 0 && rating > 0) {
+            const score = (rating / divisor) * weight;
+            $row.find('.score-value')
+                .text(score.toFixed(2))
+                .removeClass('bg-danger')
+                .addClass('bg-success');
+        } else {
+            $row.find('.score-value')
+                .text('#DIV/0!')
+                .removeClass('bg-success')
+                .addClass('bg-danger');
+        }
+    }
 });

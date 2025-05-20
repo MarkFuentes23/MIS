@@ -59,111 +59,119 @@
         </div>
     </div>
 
-    <!-- KRA Row Template (Hidden) -->
-    <template id="kraRowTemplate">
-        <tr data-kra-id="" class="kra-row">
-            <td rowspan="1" class="align-middle kra-cell" data-kra-id="">
-             <select name="kra" class="form-select form-select-sm">
-                    <option value="">Select KRA</option>
-                    <?php if(isset($kras) && !empty($kras)): ?>
-                        <?php foreach ($kras as $kra): ?>
-                            <option value="<?php echo $kra['id']; ?>"><?php echo $kra['kra']; ?></option>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </select>
-            </td>
+        <template id="kraRowTemplate">
+            <tr data-kra-id="" class="kra-row" data-goal-id="">
+                <td rowspan="1" class="align-middle kra-cell" data-kra-id="">
+                    <select name="kra" class="form-select form-select-sm kra-select">
+                        <option value="">Select KRA</option>
+                        <?php if(isset($kras) && !empty($kras)): ?>
+                            <?php foreach ($kras as $kra): ?>
+                                <option value="<?php echo $kra['id']; ?>"><?php echo $kra['kra']; ?></option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
+                </td>
+                <td><input type="text" name="goal" class="form-control form-control-sm goal-input" placeholder="Enter goal"></td>
+                <td>
+                    <select name="measurement" class="form-select form-select-sm measurement-select">
+                        <option value="Savings">Savings</option>
+                        <option value="Revenue">Revenue</option>
+                        <option value="Percentage">Percentage</option>
+                    </select>
+                </td>
+                <td><input type="number" name="weight" step="0.1" min="0" class="form-control form-control-sm weight-input" placeholder="0.0"></td>
+                <td><input type="text" name="target" class="form-control form-control-sm target-input" placeholder="Enter target"></td>
+                <td>
+                    <select name="period" class="form-select form-select-sm period-select" style="width: 80px;">
+                        <option value="Annual">Annual</option>
+                        <option value="Semi Annual">Semi Annual</option>
+                        <option value="Quarterly">Quarterly</option>
+                        <option value="Monthly">Monthly</option>
+                    </select>
+                </td>
+                <td class="month-cell"><input type="text" name="jan" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="feb" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="mar" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="apr" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="may" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="jun" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="jul" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="aug" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="sep" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="oct" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="nov" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="dec" class="form-control form-control-sm month-input"></td>
+                <td><input type="number" name="rating" class="form-control form-control-sm rating-input" min="1" max="12"></td>
+                <td class="text-center score-cell"><span class="badge bg-danger score-value">#DIV/0!</span></td>
+                <td><input type="text" name="evidence" class="form-control form-control-sm evidence-input" placeholder="Proof/Evidence"></td>
+                <td class="action-cell text-center">
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-sm btn-success add-goal-btn" style="padding: 2px 5px; font-size:8px;">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger remove-goal-btn" style="padding: 2px 5px; font-size: 8px;">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-primary save-goal-btn" style="padding:2px 5px;font-size:8px;" title="Save Goal" onclick="confirmSaveGoal()">
+                            save
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        </template>
 
-            <td><input type="text" name="goal" class="form-control form-control-sm goal-input" placeholder="Enter goal"></td>
-            <td>
-                <select name="measurement" class="form-select form-select-sm">
-                    <option value="Savings">Savings</option>
-                    <option value="Revenue">Revenue</option>
-                    <option value="Percentage">Percentage</option>
-                </select>
-            </td>
-            <td><input type="number" name="weight" step="0.1" min="0" class="form-control form-control-sm weight-input" placeholder="0.0"></td>
-            <td><input type="text" name="target" class="form-control form-control-sm" placeholder="Enter target"></td>
-            <td>
-                 <select name="period" class="form-select form-select-sm" style="width: 80px;">
-                    <option value="Annual">Annual</option>
-                    <option value="Semi Annual">Semi Annual</option>
-                    <option value="Quarterly">Quarterly</option>
-                    <option value="Monthly">Monthly</option>
-                </select>
-            </td>
-            <td class="month-cell"><input type="text" name="jan" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="feb" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="mar" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="apr" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="may" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="jun" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="jul" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="aug" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="sep" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="oct" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="nov" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="dec" class="form-control form-control-sm month-input"></td>
-            <td><input type="number" name="rating" class="form-control form-control-sm rating-input" min="1" max="12"></td>
-            <td class="text-center score-cell"><span class="badge bg-danger score-value">#DIV/0!</span></td>
-            <td><input type="text" name="evidence" class="form-control form-control-sm" placeholder="Proof/Evidence"></td>
-            <td class="action-cell text-center">
-                <div class="d-flex justify-content-between">
-                    <button type="button" class="btn btn-sm btn-success add-goal-btn" style="padding: 2px 5px; font-size:8px;">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-danger remove-goal-btn" style="padding: 2px 5px; font-size: 8px;">
-                        <i class="fas fa-minus"></i>
-                    </button>
-                </div>
-            </td>
-        </tr>
-    </template>
+        <!-- Goal Row Template (Hidden) - For additional goals under same KRA -->
+        <template id="goalRowTemplate">
+            <tr data-kra-id="" class="goal-row" data-goal-id="">
+                <td><input type="text" name="goal" class="form-control form-control-sm goal-input" placeholder="Enter goal"></td>
+                <td>
+                    <select name="measurement" class="form-select form-select-sm measurement-select">
+                        <option value="Savings">Savings</option>
+                        <option value="Revenue">Revenue</option>
+                        <option value="Percentage">Percentage</option>
+                    </select>
+                </td>
+                <td><input type="number" name="weight" step="0.1" min="0" class="form-control form-control-sm weight-input" placeholder="0.0"></td>
+                <td><input type="text" name="target" class="form-control form-control-sm target-input" placeholder="Enter target"></td>
+                <td>
+                    <select name="period" class="form-select form-select-sm period-select" style="width: 80px;">
+                        <option value="Annual">Annual</option>
+                        <option value="Semi Annual">Semi Annual</option>
+                        <option value="Quarterly">Quarterly</option>
+                        <option value="Monthly">Monthly</option>
+                    </select>
+                </td>
+                <td class="month-cell"><input type="text" name="jan" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="feb" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="mar" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="apr" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="may" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="jun" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="jul" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="aug" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="sep" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="oct" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="nov" class="form-control form-control-sm month-input"></td>
+                <td class="month-cell"><input type="text" name="dec" class="form-control form-control-sm month-input"></td>
+                <td><input type="number" name="rating" class="form-control form-control-sm rating-input" min="1" max="12"></td>
+                <td class="text-center score-cell"><span class="badge bg-danger score-value">#DIV/0!</span></td>
+                <td><input type="text" name="evidence" class="form-control form-control-sm evidence-input" placeholder="Proof/Evidence"></td>
+                <td class="action-cell text-center">
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-sm btn-success add-goal-btn" style="padding: 2px 5px; font-size:8px;">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger remove-goal-btn" style="padding: 2px 5px; font-size: 8px;">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-primary save-goal-btn" style="padding:2px 5px;font-size:8px;">
+                        save
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        </template>
 
-    <!-- Goal Row Template (Hidden) - For additional goals under same KRA -->
-    <template id="goalRowTemplate">
-        <tr data-kra-id="" class="goal-row">
-            <td><input type="text" name="goal" class="form-control form-control-sm goal-input" placeholder="Enter goal"></td>
-            <td>
-                <select name="measurement" class="form-select form-select-sm">
-                    <option value="Savings">Savings</option>
-                    <option value="Revenue">Revenue</option>
-                    <option value="Percentage">Percentage</option>
-                </select>
-            </td>
-            <td><input type="number" name="weight" step="0.1" min="0" class="form-control form-control-sm weight-input" placeholder="0.0"></td>
-            <td><input type="text" name="target" class="form-control form-control-sm" placeholder="Enter target"></td>
-            <td>
-                 <select name="period" class="form-select form-select-sm" style="width: 80px;">
-                    <option value="Annual">Annual</option>
-                    <option value="Semi Annual">Semi Annual</option>
-                    <option value="Quarterly">Quarterly</option>
-                    <option value="Monthly">Monthly</option>
-                </select>
-            </td>
-            <td class="month-cell"><input type="text" name="jan" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="feb" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="mar" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="apr" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="may" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="jun" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="jul" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="aug" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="sep" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="oct" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="nov" class="form-control form-control-sm month-input"></td>
-            <td class="month-cell"><input type="text" name="dec" class="form-control form-control-sm month-input"></td>
-            <td><input type="number" name="rating" class="form-control form-control-sm rating-input" min="1" max="12"></td>
-            <td class="text-center score-cell"><span class="badge bg-danger score-value">#DIV/0!</span></td>
-            <td><input type="text" name="evidence" class="form-control form-control-sm" placeholder="Proof/Evidence"></td>
-            <td class="action-cell text-center">
-                <div class="d-flex justify-content-between">
-                    <button type="button" class="btn btn-sm btn-success add-goal-btn" style="padding: 2px 5px; font-size:8px;">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-danger remove-goal-btn" style="padding: 2px 5px; font-size: 8px;">
-                        <i class="fas fa-minus"></i>
-                    </button>
-                </div>
-            </td>
-        </tr>
-    </template>
+
+
+

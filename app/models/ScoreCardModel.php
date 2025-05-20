@@ -1,165 +1,231 @@
 <?php
 class ScoreCardModel extends Model {
     
-    public function getAllEmployees() {
-        $stmt = $this->db->query("SELECT * FROM employees_info ORDER BY lastname, firstname");
+    // Get or create scorecard for an employee
+    public function getOrCreateScorecard($employeeId, $evaluationPeriod, $positionTitle, $department, $reviewer, $reviewerDesignation) {
+        // Check if scorecard exists
+        $stmt = $this->db->prepare("SELECT * FROM scorecards WHERE employee_id = ? AND evaluation_period = ?");
+        $stmt->execute([$employeeId, $evaluationPeriod]);
+        $scorecard = $stmt->fetch();
+        
+        if (!$scorecard) {
+            // Create new scorecard
+            $stmt = $this->db->prepare("INSERT INTO scorecards 
+                (employee_id, evaluation_period, position_title, department, reviewer, reviewer_designation) 
+                VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$employeeId, $evaluationPeriod, $positionTitle, $department, $reviewer, $reviewerDesignation]);
+            
+            // Get the newly created scorecard
+            $scorecardId = $this->db->lastInsertId();
+            $stmt = $this->db->prepare("SELECT * FROM scorecards WHERE id = ?");
+            $stmt->execute([$scorecardId]);
+            $scorecard = $stmt->fetch();
+        }
+        
+        return $scorecard;
+    }
+    
+    // Save or update a goal
+    public function saveGoal($scorecardId, $kraId, $perspective, $goalData) {
+        $sql = "INSERT INTO scorecard_goals 
+                (scorecard_id, kra_id, perspective, goal, measurement, weight, target, rating_period,
+                 jan_value, feb_value, mar_value, apr_value, may_value, jun_value,
+                 jul_value, aug_value, sep_value, oct_value, nov_value, dec_value,
+                 rating, evidence) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                goal = VALUES(goal),
+                measurement = VALUES(measurement),
+                weight = VALUES(weight),
+                target = VALUES(target),
+                rating_period = VALUES(rating_period),
+                jan_value = VALUES(jan_value),
+                feb_value = VALUES(feb_value),
+                mar_value = VALUES(mar_value),
+                apr_value = VALUES(apr_value),
+                may_value = VALUES(may_value),
+                jun_value = VALUES(jun_value),
+                jul_value = VALUES(jul_value),
+                aug_value = VALUES(aug_value),
+                sep_value = VALUES(sep_value),
+                oct_value = VALUES(oct_value),
+                nov_value = VALUES(nov_value),
+                dec_value = VALUES(dec_value),
+                rating = VALUES(rating),
+                evidence = VALUES(evidence)";
+        
+        $stmt = $this->db->prepare($sql);
+        
+        $params = [
+            $scorecardId,
+            $kraId,
+            $perspective,
+            $goalData['goal'],
+            $goalData['measurement'],
+            $goalData['weight'],
+            $goalData['target'],
+            $goalData['period'],
+            $goalData['jan'] ?? null,
+            $goalData['feb'] ?? null,
+            $goalData['mar'] ?? null,
+            $goalData['apr'] ?? null,
+            $goalData['may'] ?? null,
+            $goalData['jun'] ?? null,
+            $goalData['jul'] ?? null,
+            $goalData['aug'] ?? null,
+            $goalData['sep'] ?? null,
+            $goalData['oct'] ?? null,
+            $goalData['nov'] ?? null,
+            $goalData['dec'] ?? null,
+            $goalData['rating'] ?? null,
+            $goalData['evidence'] ?? null
+        ];
+        
+        $result = $stmt->execute($params);
+        
+        if ($result) {
+            // Calculate and update score
+            $goalId = $this->db->lastInsertId() ?: $this->getGoalId($scorecardId, $kraId, $goalData['goal']);
+            $this->updateGoalScore($goalId);
+            return $goalId;
+        }
+        
+        return false;
+    }
+    
+    // Update goal score based on formula
+    private function updateGoalScore($goalId) {
+        $stmt = $this->db->prepare("SELECT weight, rating, rating_period FROM scorecard_goals WHERE id = ?");
+        $stmt->execute([$goalId]);
+        $goal = $stmt->fetch();
+        
+        if ($goal && $goal['rating'] && $goal['weight']) {
+            $weight = (float)$goal['weight'];
+            $rating = (float)$goal['rating'];
+            
+            // Calculate divisor based on period
+            $divisor = 1; // Default for Annual
+            switch ($goal['rating_period']) {
+                case 'Semi Annual':
+                    $divisor = 2;
+                    break;
+                case 'Quarterly':
+                    $divisor = 4;
+                    break;
+                case 'Monthly':
+                    $divisor = 12;
+                    break;
+            }
+            
+            $score = ($rating / $divisor) * $weight;
+            
+            $stmt = $this->db->prepare("UPDATE scorecard_goals SET score = ? WHERE id = ?");
+            $stmt->execute([$score, $goalId]);
+        }
+    }
+    
+    // Get goal ID for existing goal
+    private function getGoalId($scorecardId, $kraId, $goalText) {
+        $stmt = $this->db->prepare("SELECT id FROM scorecard_goals WHERE scorecard_id = ? AND kra_id = ? AND goal = ?");
+        $stmt->execute([$scorecardId, $kraId, $goalText]);
+        $result = $stmt->fetch();
+        return $result ? $result['id'] : null;
+    }
+    
+    // Get goals for a scorecard
+    public function getGoalsByScorecard($scorecardId, $perspective = null) {
+        $sql = "SELECT sg.*, k.kra as kra_name 
+                FROM scorecard_goals sg 
+                JOIN kras k ON sg.kra_id = k.id 
+                WHERE sg.scorecard_id = ?";
+        
+        $params = [$scorecardId];
+        
+        if ($perspective) {
+            $sql .= " AND sg.perspective = ?";
+            $params[] = $perspective;
+        }
+        
+        $sql .= " ORDER BY sg.id";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
     
+    // Get all KRAs
+    public function getAllKras() {
+        $stmt = $this->db->query("SELECT id, kra FROM kras ORDER BY kra ASC");
+        return $stmt->fetchAll();
+    }
+    
+    // Get employee info
     public function getEmployeeById($id) {
         $stmt = $this->db->prepare("SELECT * FROM employees_info WHERE id = ?");
         $stmt->execute([$id]);
         return $stmt->fetch();
     }
     
-    public function getEvaluationByEmployeeId($employeeId) {
-        $stmt = $this->db->prepare("SELECT * FROM evaluation_forms WHERE employee_id = ?");
-        $stmt->execute([$employeeId]);
-        return $stmt->fetch();
-    }
-    
-    public function saveEvaluationForm($employeeId, $reviewerId = null, $reviewerDesignation = null) {
-        // Check if evaluation record exists
-        $stmt = $this->db->prepare("SELECT id FROM evaluation_forms WHERE employee_id = ?");
-        $stmt->execute([$employeeId]);
-        $existingForm = $stmt->fetch();
-        
-        if ($existingForm) {
-            // Update existing form
-            $stmt = $this->db->prepare("UPDATE evaluation_forms SET 
-                                      reviewer_id = ?, 
-                                      reviewer_designation = ?, 
-                                      updated_at = NOW() 
-                                      WHERE employee_id = ?");
-            $stmt->execute([$reviewerId, $reviewerDesignation, $employeeId]);
-            return $existingForm['id'];
-        } else {
-            // Insert new form
-            $stmt = $this->db->prepare("INSERT INTO evaluation_forms 
-                                      (employee_id, reviewer_id, reviewer_designation, created_at, updated_at) 
-                                      VALUES (?, ?, ?, NOW(), NOW())");
-            $stmt->execute([$employeeId, $reviewerId, $reviewerDesignation]);
-            return $this->db->lastInsertId();
-        }
-    }
-    
-    public function getKRAData($evaluationId, $categoryId) {
-        $stmt = $this->db->prepare("SELECT * FROM kra_data WHERE evaluation_id = ? AND category_id = ?");
-        $stmt->execute([$evaluationId, $categoryId]);
+    // Get all employees
+    public function getAllEmployees() {
+        $stmt = $this->db->query("SELECT * FROM employees_info ORDER BY lastname, firstname");
         return $stmt->fetchAll();
     }
     
-    public function deleteKRAData($evaluationId, $categoryId) {
-        $stmt = $this->db->prepare("DELETE FROM kra_data WHERE evaluation_id = ? AND category_id = ?");
-        return $stmt->execute([$evaluationId, $categoryId]);
+    // Get scorecard by employee and period
+    public function getScorecardByEmployee($employeeId, $evaluationPeriod) {
+        $stmt = $this->db->prepare("SELECT * FROM scorecards WHERE employee_id = ? AND evaluation_period = ?");
+        $stmt->execute([$employeeId, $evaluationPeriod]);
+        return $stmt->fetch();
     }
     
-    public function saveKRAData(
-        $evaluationId, 
-        $categoryId,
-        $kraType,
-        $goal,
-        $measurement,
-        $weight,
-        $target,
-        $ratingPeriod,
-        $jan = null,
-        $feb = null,
-        $mar = null,
-        $apr = null,
-        $may = null,
-        $jun = null,
-        $jul = null,
-        $aug = null,
-        $sep = null,
-        $oct = null,
-        $nov = null,
-        $dec = null,
-        $rating = null,
-        $score = null,
-        $evidence = null,
-        $isLocked = false
-    ) {
-        $stmt = $this->db->prepare("INSERT INTO kra_data (
-            evaluation_id, category_id, kra_type, goal, measurement, weight, target,
-            rating_period, jan_value, feb_value, mar_value, apr_value, may_value,
-            jun_value, jul_value, aug_value, sep_value, oct_value, nov_value, dec_value,
-            rating, score, evidence, is_locked
-        ) VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-        )");
+    // Delete a goal
+    public function deleteGoal($goalId) {
+        $stmt = $this->db->prepare("DELETE FROM scorecard_goals WHERE id = ?");
+        return $stmt->execute([$goalId]);
+    }
+
+
+    
+    
+    // Update goal by ID
+    public function updateGoal($goalId, $goalData) {
+        $sql = "UPDATE scorecard_goals SET 
+                goal = ?, measurement = ?, weight = ?, target = ?, rating_period = ?,
+                jan_value = ?, feb_value = ?, mar_value = ?, apr_value = ?, may_value = ?, jun_value = ?,
+                jul_value = ?, aug_value = ?, sep_value = ?, oct_value = ?, nov_value = ?, dec_value = ?,
+                rating = ?, evidence = ?
+                WHERE id = ?";
         
-        return $stmt->execute([
-            $evaluationId, $categoryId, $kraType, $goal, $measurement, $weight, $target,
-            $ratingPeriod, $jan, $feb, $mar, $apr, $may, $jun, $jul, $aug, $sep, $oct,
-            $nov, $dec, $rating, $score, $evidence, $isLocked
-        ]);
-    }
-    
-    public function updateEvaluationScore($evaluationId, $score) {
-        $stmt = $this->db->prepare("UPDATE evaluation_forms SET evaluation_score = ?, updated_at = NOW() WHERE id = ?");
-        return $stmt->execute([$score, $evaluationId]);
-    }
-    
-    public function checkAllSectionsLocked($evaluationId) {
-        // Get all category IDs
-        $stmt = $this->db->query("SELECT id FROM kra_categories");
-        $categories = $stmt->fetchAll();
+        $params = [
+            $goalData['goal'],
+            $goalData['measurement'],
+            $goalData['weight'],
+            $goalData['target'],
+            $goalData['period'],
+            $goalData['jan'] ?? null,
+            $goalData['feb'] ?? null,
+            $goalData['mar'] ?? null,
+            $goalData['apr'] ?? null,
+            $goalData['may'] ?? null,
+            $goalData['jun'] ?? null,
+            $goalData['jul'] ?? null,
+            $goalData['aug'] ?? null,
+            $goalData['sep'] ?? null,
+            $goalData['oct'] ?? null,
+            $goalData['nov'] ?? null,
+            $goalData['dec'] ?? null,
+            $goalData['rating'] ?? null,
+            $goalData['evidence'] ?? null,
+            $goalId
+        ];
         
-        foreach ($categories as $category) {
-            // Check if there are any unlocked rows for this category
-            $stmt = $this->db->prepare("SELECT COUNT(*) as count FROM kra_data 
-                                        WHERE evaluation_id = ? AND category_id = ? AND is_locked = 0");
-            $stmt->execute([$evaluationId, $category['id']]);
-            $result = $stmt->fetch();
-            
-            if ($result['count'] > 0) {
-                return false; // Found unlocked rows
-            }
-            
-            // Check if there are any rows at all for this category
-            $stmt = $this->db->prepare("SELECT COUNT(*) as count FROM kra_data 
-                                        WHERE evaluation_id = ? AND category_id = ?");
-            $stmt->execute([$evaluationId, $category['id']]);
-            $result = $stmt->fetch();
-            
-            if ($result['count'] == 0) {
-                return false; // No data for this category
-            }
+        $result = $this->db->prepare($sql)->execute($params);
+        
+        if ($result) {
+            $this->updateGoalScore($goalId);
         }
         
-        return true; // All categories have locked data
-    }
-    
-    public function calculateTotalScore($evaluationId) {
-        // Get category weights
-        $stmt = $this->db->query("SELECT id, weight FROM kra_categories");
-        $categories = $stmt->fetchAll();
-        
-        $totalScore = 0;
-        
-        foreach ($categories as $category) {
-            // Calculate weighted average score for this category
-            $stmt = $this->db->prepare("SELECT SUM(score * weight) / SUM(weight) as category_score 
-                                        FROM kra_data 
-                                        WHERE evaluation_id = ? AND category_id = ?");
-            $stmt->execute([$evaluationId, $category['id']]);
-            $result = $stmt->fetch();
-            
-            if ($result && $result['category_score'] !== null) {
-                // Apply category weight to category score
-                $totalScore += ($result['category_score'] * $category['weight'] / 100);
-            }
-        }
-        
-        return round($totalScore, 2);
-    }
-    
-    public function finalizeEvaluation($evaluationId, $totalScore) {
-        $stmt = $this->db->prepare("UPDATE evaluation_forms SET 
-                                  evaluation_score = ?, 
-                                  updated_at = NOW() 
-                                  WHERE id = ?");
-        return $stmt->execute([$totalScore, $evaluationId]);
+        return $result;
     }
 }
