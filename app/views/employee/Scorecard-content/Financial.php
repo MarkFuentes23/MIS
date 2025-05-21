@@ -167,9 +167,7 @@
                         <button type="button" class="btn btn-sm btn-success add-goal-btn" style="padding: 2px 5px; font-size:8px;">
                             <i class="fas fa-plus"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-danger remove-goal-btn" style="padding: 2px 5px; font-size: 8px;">
-                            <i class="fas fa-minus"></i>
-                        </button>
+                       <button class="btn btn-danger btn-sm remove-goal-btn style="padding: 2px 5px; font-size:8px;"><i class="fas fa-trash"></i></button>
                         <button type="button" class="btn btn-sm btn-primary save-goal-btn" style="padding:2px 5px;font-size:8px;" title="Save Goal">
                             Save
                         </button>

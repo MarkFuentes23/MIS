@@ -44,11 +44,12 @@
                             <td><input type="text" class="form-value" id="reviewer_designation" value=""></td>
                         </tr>
                     </table>
-                    
-                    <!-- Scorecard Rating Section -->
-                        <?php include 'scorecard.php'; ?>
-                        <script src="/public/js/formEmployee.js"></script>
-                     <?php include 'scorecard-include.php'; ?>
+
+<!-- Scorecard Rating Section -->
+    <?php include 'scorecard.php'; ?>
+    <script src="/public/js/formEmployee.js"></script>
+    <script src="/public/js/reload.js"></script>
+    <?php include 'scorecard-include.php'; ?>
 
 
                     

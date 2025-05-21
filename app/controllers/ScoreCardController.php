@@ -106,10 +106,17 @@ class ScoreCardController extends Controller {
                     'evidence' => $_POST['evidence'] ?? null
                 ];
                 
+                // Ensure we have a valid KRA ID
                 $kraId = $_POST['kra_id'] ?? null;
                 
                 if (!$kraId) {
                     throw new Exception('KRA is required');
+                }
+                
+                // Validate that KRA ID exists
+                $validKra = $this->scoreCardModel->validateKraId($kraId);
+                if (!$validKra) {
+                    throw new Exception('Invalid KRA selected');
                 }
                 
                 // Save goal
@@ -119,7 +126,8 @@ class ScoreCardController extends Controller {
                     echo json_encode([
                         'status' => 'success',
                         'message' => 'Goal saved successfully',
-                        'goal_id' => $goalId
+                        'goal_id' => $goalId,
+                        'kra_id' => $kraId // Return KRA ID for reference
                     ]);
                 } else {
                     throw new Exception('Failed to save goal');

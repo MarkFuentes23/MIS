@@ -25,8 +25,22 @@ class ScoreCardModel extends Model {
         return $scorecard;
     }
     
+    // Validate that a KRA ID exists in the database
+    public function validateKraId($kraId) {
+        if (!$kraId) return false;
+        
+        $stmt = $this->db->prepare("SELECT id FROM kras WHERE id = ?");
+        $stmt->execute([$kraId]);
+        return $stmt->fetch() ? true : false;
+    }
+    
     // Save a new goal
     public function saveGoal($scorecardId, $kraId, $perspective, $goalData) {
+        // Validate KRA ID exists
+        if (!$this->validateKraId($kraId)) {
+            return false;
+        }
+        
         $sql = "INSERT INTO scorecard_goals 
                 (scorecard_id, kra_id, perspective, goal, measurement, weight, target, rating_period,
                  jan_value, feb_value, mar_value, apr_value, may_value, jun_value,
@@ -147,25 +161,21 @@ class ScoreCardModel extends Model {
     
     // Get all employees
     public function getAllEmployees() {
-        $stmt = $this->db->query("SELECT * FROM employees_info ORDER BY lastname, firstname");
+        $stmt = $this->db->query("SELECT id, first_name, last_name FROM employees_info ORDER BY last_name ASC");
         return $stmt->fetchAll();
     }
     
-    // Get scorecard by employee and period
+    // Get scorecard by employee
     public function getScorecardByEmployee($employeeId, $evaluationPeriod) {
         $stmt = $this->db->prepare("SELECT * FROM scorecards WHERE employee_id = ? AND evaluation_period = ?");
         $stmt->execute([$employeeId, $evaluationPeriod]);
         return $stmt->fetch();
     }
     
-    // Delete a goal
-    public function deleteGoal($goalId) {
-        $stmt = $this->db->prepare("DELETE FROM scorecard_goals WHERE id = ?");
-        return $stmt->execute([$goalId]);
-    }
-    
-    // Update goal by ID
-    public function updateGoal($goalId, $goalData) {
+    // Update existing goal
+   public function updateGoal($goalId, $goalData) {
+        if (!$goalId) return false;
+        
         $sql = "UPDATE scorecard_goals SET 
                 goal = ?, 
                 measurement = ?, 
@@ -215,10 +225,126 @@ class ScoreCardModel extends Model {
         $result = $stmt->execute($params);
         
         if ($result) {
+            // Update the goal score after modifying it
             $this->updateGoalScore($goalId);
             return true;
         }
         
         return false;
+    }
+    
+    // Delete a goal
+    public function deleteGoal($goalId) {
+        if (!$goalId) return false;
+        
+        $stmt = $this->db->prepare("DELETE FROM scorecard_goals WHERE id = ?");
+        return $stmt->execute([$goalId]);
+    }
+    
+    // Get goal details by ID
+    public function getGoalById($goalId) {
+        $stmt = $this->db->prepare("SELECT * FROM scorecard_goals WHERE id = ?");
+        $stmt->execute([$goalId]);
+        return $stmt->fetch();
+    }
+    
+    // Get total score for a scorecard
+    public function getTotalScore($scorecardId, $perspective = null) {
+        $sql = "SELECT SUM(score) as total_score FROM scorecard_goals WHERE scorecard_id = ?";
+        $params = [$scorecardId];
+        
+        if ($perspective) {
+            $sql .= " AND perspective = ?";
+            $params[] = $perspective;
+        }
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $result = $stmt->fetch();
+        
+        return $result ? $result['total_score'] : 0;
+    }
+    
+    // Get total weight for a scorecard
+    public function getTotalWeight($scorecardId, $perspective = null) {
+        $sql = "SELECT SUM(weight) as total_weight FROM scorecard_goals WHERE scorecard_id = ?";
+        $params = [$scorecardId];
+        
+        if ($perspective) {
+            $sql .= " AND perspective = ?";
+            $params[] = $perspective;
+        }
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $result = $stmt->fetch();
+        
+        return $result ? $result['total_weight'] : 0;
+    }
+    
+    // Update scorecard details
+    public function updateScorecard($scorecardId, $data) {
+        $sql = "UPDATE scorecards SET 
+                position_title = ?, 
+                department = ?, 
+                reviewer = ?, 
+                reviewer_designation = ?,
+                updated_at = NOW()
+                WHERE id = ?";
+        
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([
+            $data['position_title'] ?? null,
+            $data['department'] ?? null,
+            $data['reviewer'] ?? null,
+            $data['reviewer_designation'] ?? null,
+            $scorecardId
+        ]);
+    }
+    
+    // Get goals by KRA
+    public function getGoalsByKra($scorecardId, $kraId) {
+        $stmt = $this->db->prepare("SELECT * FROM scorecard_goals WHERE scorecard_id = ? AND kra_id = ?");
+        $stmt->execute([$scorecardId, $kraId]);
+        return $stmt->fetchAll();
+    }
+    
+    // Get all perspectives
+    public function getAllPerspectives() {
+        return ['financial', 'customer', 'internal', 'learning'];
+    }
+    
+    // Get scorecard overall performance
+    public function getScorecardPerformance($scorecardId) {
+        $sql = "SELECT 
+                SUM(score) as total_score, 
+                SUM(weight) as total_weight,
+                CASE 
+                    WHEN SUM(weight) > 0 THEN (SUM(score) / SUM(weight)) * 100
+                    ELSE 0
+                END as performance_percentage
+                FROM scorecard_goals 
+                WHERE scorecard_id = ?";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$scorecardId]);
+        return $stmt->fetch();
+    }
+    
+    // Get perspective performance
+    public function getPerspectivePerformance($scorecardId, $perspective) {
+        $sql = "SELECT 
+                SUM(score) as total_score, 
+                SUM(weight) as total_weight,
+                CASE 
+                    WHEN SUM(weight) > 0 THEN (SUM(score) / SUM(weight)) * 100
+                    ELSE 0
+                END as performance_percentage
+                FROM scorecard_goals 
+                WHERE scorecard_id = ? AND perspective = ?";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$scorecardId, $perspective]);
+        return $stmt->fetch();
     }
 }
