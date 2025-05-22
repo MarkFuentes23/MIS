@@ -15,9 +15,6 @@
     }
     // end collapsible
 
-
-
-
     // start of scorecard
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize all KRA sections
@@ -54,7 +51,7 @@
                 updateAddButtonsState(sum);
             }
             
-            // Update add buttons state based on total weight and database weight
+            // Update add buttons state based on total weight
             function updateAddButtonsState(totalWeight) {
                 const maxWeight = 100; // Maximum allowed weight is 100%
                 const addButtons = body.querySelectorAll('.add-goal-btn');
@@ -66,46 +63,11 @@
                         btn.title = "Maximum weight (100%) reached";
                     });
                 } else {
-                    // Check if any row has a weight of 10% or more in the database
-                    body.querySelectorAll('tr').forEach(row => {
-                        const weightInput = row.querySelector('.weight-input');
-                        const savedWeightAttr = row.getAttribute('data-saved-weight');
-                        
-                        if (savedWeightAttr && parseFloat(savedWeightAttr) >= 10) {
-                            // Disable add buttons for this KRA
-                            const kraId = row.dataset.kraId;
-                            if (kraId) {
-                                body.querySelectorAll(`tr[data-kra-id="${kraId}"] .add-goal-btn`).forEach(btn => {
-                                    btn.disabled = true;
-                                    btn.title = "Cannot add goal - weight limit of 10% reached in database";
-                                });
-                            }
-                        } else {
-                            // Enable if not disabled by total weight check
-                            const kraId = row.dataset.kraId;
-                            if (kraId && totalWeight < maxWeight) {
-                                body.querySelectorAll(`tr[data-kra-id="${kraId}"] .add-goal-btn`).forEach(btn => {
-                                    if (!isKraWeightLimitReached(kraId)) {
-                                        btn.disabled = false;
-                                        btn.title = "Add goal";
-                                    }
-                                });
-                            }
-                        }
+                    addButtons.forEach(btn => {
+                        btn.disabled = false;
+                        btn.title = "Add goal";
                     });
                 }
-            }
-            
-            // Check if KRA has reached the 10% weight limit in database
-            function isKraWeightLimitReached(kraId) {
-                let isLimitReached = false;
-                body.querySelectorAll(`tr[data-kra-id="${kraId}"]`).forEach(row => {
-                    const savedWeightAttr = row.getAttribute('data-saved-weight');
-                    if (savedWeightAttr && parseFloat(savedWeightAttr) >= 10) {
-                        isLimitReached = true;
-                    }
-                });
-                return isLimitReached;
             }
             
             // Calculate score based on formula
@@ -207,18 +169,12 @@
             }
             
             // Add a goal row to a specific KRA
-                function addGoalRow(kraId) {
+            function addGoalRow(kraId) {
                 // Check current weight first
                 let currentWeight = parseFloat(wtCell.textContent) || 0;
                 if (currentWeight >= 100) {
-                alert('Cannot add new goal. Maximum weight (100%) has been reached.');
-                return;
-                }
-
-                // Check if KRA has reached 10% weight limit in database
-                if (isKraWeightLimitReached(kraId)) {
-                alert('Cannot add new goal. This KRA has reached the 10% weight limit in the database.');
-                return;
+                    alert('Cannot add new goal. Maximum weight (100%) has been reached.');
+                    return;
                 }
 
                 // Increment goal count for this KRA
@@ -227,7 +183,7 @@
                 // Find KRA cell
                 const kraCell = body.querySelector(`td.kra-cell[data-kra-id="${kraId}"]`);
                 if (kraCell) {
-                kraCell.rowSpan = goalsByKRA[kraId];
+                    kraCell.rowSpan = goalsByKRA[kraId];
                 }
 
                 // Clone the goal row template
@@ -242,49 +198,6 @@
 
                 // Update weight total
                 updateWeight();
-                }
-            
-            // Remove a goal row from a specific KRA
-            function removeGoalRow(kraId) {
-                // Find all rows for this KRA
-                const rows = Array.from(body.querySelectorAll(`tr[data-kra-id="${kraId}"]`));
-                
-                if (rows.length <= 1) {
-                    // If last goal, don't remove it
-                    return;
-                }
-                
-                // Get the last goal row (fixed)
-                const lastGoalRow = rows[rows.length - 1];
-                
-                if (lastGoalRow) {
-                    // Check if this is a KRA row
-                    const isKraRow = lastGoalRow.querySelector('.kra-cell') !== null;
-                    
-                    // If it's a KRA row and not the only row, don't remove it
-                    if (isKraRow && rows.length > 1) {
-                        alert('Cannot remove KRA row. Remove goal rows first.');
-                        return;
-                    }
-                    
-                    // Remove the row
-                    lastGoalRow.remove();
-                    
-                    // Decrement goal count
-                    goalsByKRA[kraId]--;
-                    
-                    // Update KRA cell rowspan
-                    const kraCell = body.querySelector(`td.kra-cell[data-kra-id="${kraId}"]`);
-                    if (kraCell) {
-                        kraCell.rowSpan = goalsByKRA[kraId];
-                    }
-                    
-                    // Update weight total
-                    updateWeight();
-                    
-                    // Update total score
-                    updateTotalScore();
-                }
             }
             
             // Setup event listeners for a row
@@ -342,22 +255,6 @@
                 const saveBtn = row.querySelector('.save-goal-btn');
                 if (saveBtn) {
                     saveBtn.addEventListener('click', function() {
-                        // When saving to database, store the weight value as data attribute
-                        const weightInput = row.querySelector('.weight-input');
-                        if (weightInput) {
-                            const weight = parseFloat(weightInput.value) || 0;
-                            row.setAttribute('data-saved-weight', weight);
-                            
-                            // Check if weight is 10% or more
-                            if (weight >= 10) {
-                                // Disable add buttons for this KRA
-                                body.querySelectorAll(`tr[data-kra-id="${kraId}"] .add-goal-btn`).forEach(btn => {
-                                    btn.disabled = true;
-                                    btn.title = "Cannot add goal - weight limit of 10% reached in database";
-                                });
-                            }
-                        }
-                        
                         // Your existing save logic here...
                     });
                 }
@@ -366,31 +263,6 @@
                 const updateBtn = row.querySelector('.update-goal-btn');
                 if (updateBtn) {
                     updateBtn.addEventListener('click', function() {
-                        // When updating in database, update the stored weight value
-                        const weightInput = row.querySelector('.weight-input');
-                        if (weightInput) {
-                            const weight = parseFloat(weightInput.value) || 0;
-                            row.setAttribute('data-saved-weight', weight);
-                            
-                            // Check if weight is 10% or more
-                            if (weight >= 10) {
-                                // Disable add buttons for this KRA
-                                body.querySelectorAll(`tr[data-kra-id="${kraId}"] .add-goal-btn`).forEach(btn => {
-                                    btn.disabled = true;
-                                    btn.title = "Cannot add goal - weight limit of 10% reached in database";
-                                });
-                            } else {
-                                // Re-check if any row in this KRA still has 10%+ weight
-                                if (!isKraWeightLimitReached(kraId)) {
-                                    // Enable add buttons if no other row has 10%+ weight
-                                    body.querySelectorAll(`tr[data-kra-id="${kraId}"] .add-goal-btn`).forEach(btn => {
-                                        btn.disabled = false;
-                                        btn.title = "Add goal";
-                                    });
-                                }
-                            }
-                        }
-                        
                         // Your existing update logic here...
                     });
                 }
@@ -426,36 +298,6 @@
                 }
             }
             
-            // Function to load data from database and set data-saved-weight attributes
-            function loadDatabaseWeights() {
-                // This function should be called after loading data from your database
-                // It will set the data-saved-weight attribute on rows based on database values
-                
-                // Example of how this might work with your actual data loading code:
-                /*
-                fetchGoalsFromDatabase().then(goals => {
-                    goals.forEach(goal => {
-                        const row = document.querySelector(`tr[data-goal-id="${goal.id}"]`);
-                        if (row) {
-                            row.setAttribute('data-saved-weight', goal.weight);
-                            
-                            // Check if any weight is 10% or more
-                            if (parseFloat(goal.weight) >= 10) {
-                                const kraId = row.dataset.kraId;
-                                if (kraId) {
-                                    // Disable add buttons for this KRA
-                                    body.querySelectorAll(`tr[data-kra-id="${kraId}"] .add-goal-btn`).forEach(btn => {
-                                        btn.disabled = true;
-                                        btn.title = "Cannot add goal - weight limit of 10% reached in database";
-                                    });
-                                }
-                            }
-                        }
-                    });
-                });
-                */
-            }
-            
             // Initialize main buttons
             btnAddKRA.addEventListener('click', function() {
                 addKRASection();
@@ -467,9 +309,6 @@
             
             // Add first KRA section on load
             addKRASection();
-            
-            // Load data from database if available
-            loadDatabaseWeights();
         }
     });
     // end of scorecard
@@ -477,19 +316,15 @@
 
     // employee auto populate
     document.addEventListener('DOMContentLoaded', function() {
-        // Get the employee select dropdown
         const employeeSelect = document.getElementById('employee_select');
         
-        // Add change event listener
         employeeSelect.addEventListener('change', function() {
             const employeeId = this.value;
             
             if (employeeId) {
-                // Create form data for the AJAX request
                 const formData = new FormData();
                 formData.append('employee_id', employeeId);
                 
-                // Send AJAX request to get employee data
                 fetch('/scorecard/getEmployeeData', {
                     method: 'POST',
                     body: formData
@@ -497,18 +332,21 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        // Fill in the job title and department fields
+                        // Fixed: Use job_title (matches database column)
                         document.getElementById('job_title').value = data.data.job_title || '';
                         document.getElementById('department').value = data.data.department || '';
                     } else {
                         console.error('Error:', data.message);
+                        document.getElementById('job_title').value = '';
+                        document.getElementById('department').value = '';
                     }
                 })
                 .catch(error => {
                     console.error('Error fetching employee data:', error);
+                    document.getElementById('job_title').value = '';
+                    document.getElementById('department').value = '';
                 });
             } else {
-                // Clear the fields if no employee is selected
                 document.getElementById('job_title').value = '';
                 document.getElementById('department').value = '';
             }
@@ -517,373 +355,598 @@
     //  employee auto populate end
 
 
-
-
-
     // financial save button 
-    $(document).ready(function() {
-        let lastSavedKraId = null; // Store the last saved KRA ID
-        
-        // Add new remove button functionality
-        $(document).on('click', '.remove-goal-btn', function() {
-            let $btn = $(this);
-            let $row = $btn.closest('tr');
-            
-            // Only allow removal if row has no goal_id (unsaved)
-            if (!$row.attr('data-goal-id')) {
-                // Show confirmation dialog
-                Swal.fire({
-                    title: 'Remove Row?',
-                    text: "Are you sure you want to remove this unsaved row?",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, remove it!',
-                    cancelButtonText: 'Cancel'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Remove the row
-                        $row.remove();
-                        
-                        // Show success message
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Removed!',
-                            text: 'Row has been removed.',
-                            showConfirmButton: false,
-                            timer: 1500
-                        });
-                    }
-                });
-            } else {
-                // Row is already saved, show error
-                Swal.fire('Cannot Remove', 'This row has already been saved and cannot be removed.', 'error');
-            }
-        });
-        
-        // Handle save button click for new records
-        $(document).on('click', '.save-goal-btn', function() {
-            let $btn = $(this);
-            let $row = $btn.closest('tr');
-            
-            // Show confirmation dialog
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "Do you want to save this goal?",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, save it!',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    saveGoalData($row);
+  $(document).ready(function() {
+    let lastSavedKraId = null;
+    
+    // Load existing data when employee is selected
+    $('#employee_select').on('change', function() {
+        const employeeId = $(this).val();
+        if (employeeId) {
+            loadEmployeeData(employeeId);
+            loadExistingGoals(employeeId);
+        } else {
+            clearForm();
+        }
+    });
+    
+    // Load employee basic data
+    function loadEmployeeData(employeeId) {
+        $.ajax({
+            url: '/scorecard/getEmployeeData',
+            type: 'POST',
+            data: { employee_id: employeeId },
+            dataType: 'json',
+            success: function(res) {
+                if (res.status === 'success') {
+                    $('#job_title').val(res.data.job_title || '');
+                    $('#department').val(res.data.department || '');
                 }
-            });
-        });
-        
-        // Handle edit button click
-        $(document).on('click', '.edit-goal-btn', function() {
-            let $btn = $(this);
-            let $row = $btn.closest('tr');
-            
-            // Enable form fields
-            $row.find('input, select').prop('disabled', false);
-            
-            // Hide edit button, show update button
-            $btn.hide();
-            $row.find('.update-goal-btn').show();
-            $row.find('.save-goal-btn').hide();
-        });
-        
-        // Handle update button click
-        $(document).on('click', '.update-goal-btn', function() {
-            let $btn = $(this);
-            let $row = $btn.closest('tr');
-            
-            // Show confirmation dialog
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "Do you want to update this goal?",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, update it!',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    updateGoalData($row);
-                }
-            });
-        });
-        
-        // Function to save goal data (for new goals only)
-        function saveGoalData($row) {
-            // Determine if it's a KRA row or goal row
-            let isKraRow = $row.hasClass('kra-row');
-            
-            // Get KRA ID properly based on row type
-            let kraId;
-            if (isKraRow) {
-                kraId = $row.find('.kra-select').val();
-            } else {
-                // For goal rows, get KRA ID from the data-kra-id attribute
-                kraId = $row.data('kra-id');
+            },
+            error: function() {
+                console.error('Failed to load employee data');
             }
-            
-            // Get employee ID
-            let employeeId = $('#employee_select').val();
-            
-            // Validate required fields
-            if (!employeeId) {
-                Swal.fire('Error', 'Please select an employee first', 'error');
-                return;
-            }
-            
-            if (!kraId) {
-                Swal.fire('Error', 'KRA is required', 'error');
-                return;
-            }
-            
-            // Get position title, department, reviewer, and reviewer designation
-            const positionTitle = $('#job_title').val() || null;
-            const department = $('#department').val() || null;
-            const reviewer = $('#reviewer').val() || null;
-            const reviewerDesignation = $('#reviewer_designation').val() || null;
-            
-            // Collect form data
-            let data = {
+        });
+    }
+    
+    // Load existing goals
+    function loadExistingGoals(employeeId) {
+        // Clear table first
+        $('#scorecardTable tbody').empty();
+        
+        $.ajax({
+            url: '/scorecard/loadGoals',
+            type: 'POST',
+            data: { 
                 employee_id: employeeId,
-                evaluation_period: $('#evaluation_period').val(),
-                kra_id: kraId,
-                position_title: positionTitle,
-                department: department,
-                reviewer: reviewer,
-                reviewer_designation: reviewerDesignation,
-                goal: $row.find('.goal-input').val(),
-                measurement: $row.find('.measurement-select').val(),
-                weight: $row.find('.weight-input').val(),
-                target: $row.find('.target-input').val(),
-                period: $row.find('.period-select').val(),
-                jan: $row.find('input[name="jan"]').val(),
-                feb: $row.find('input[name="feb"]').val(),
-                mar: $row.find('input[name="mar"]').val(),
-                apr: $row.find('input[name="apr"]').val(),
-                may: $row.find('input[name="may"]').val(),
-                jun: $row.find('input[name="jun"]').val(),
-                jul: $row.find('input[name="jul"]').val(),
-                aug: $row.find('input[name="aug"]').val(),
-                sep: $row.find('input[name="sep"]').val(),
-                oct: $row.find('input[name="oct"]').val(),
-                nov: $row.find('input[name="nov"]').val(),
-                dec: $row.find('input[name="dec"]').val(),
-                rating: $row.find('.rating-input').val(),
-                evidence: $row.find('.evidence-input').val()
-            };
-            
-            // Send Ajax request
-            $.ajax({
-                url: '/scorecard/saveGoal',
-                type: 'POST',
-                data: data,
-                dataType: 'json',
-                success: function(res) {
-                    if (res.status === 'success') {
-                        // Store the KRA ID of the saved row
-                        lastSavedKraId = kraId;
-                        
-                        // Store goal ID for new goals
-                        if (res.goal_id) {
-                            $row.attr('data-goal-id', res.goal_id);
+                evaluation_period: $('#evaluation_period').val() || '2025'
+            },
+            dataType: 'json',
+            success: function(res) {
+                console.log('Load Goals Response:', res);
+                
+                if (res.status === 'success' && res.data && res.data.length > 0) {
+                    const groupedGoals = {};
+                    res.data.forEach(goal => {
+                        if (!groupedGoals[goal.kra_id]) {
+                            groupedGoals[goal.kra_id] = [];
                         }
+                        groupedGoals[goal.kra_id].push(goal);
+                    });
+                    
+                    Object.keys(groupedGoals).forEach(kraId => {
+                        const goals = groupedGoals[kraId];
                         
-                        // Disable inputs
-                        $row.find('input, select').prop('disabled', true);
-                        
-                        // Update button visibility
-                        $row.find('.save-goal-btn').hide();
-                        $row.find('.update-goal-btn').hide();
-                        $row.find('.edit-goal-btn').show();
-                        
-                        // Hide remove button once saved
-                        $row.find('.remove-goal-btn').hide();
-                        
-                        // Show success message
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success!',
-                            text: 'Your goal has been saved successfully.',
-                            showConfirmButton: false,
-                            timer: 1500
+                        goals.forEach((goal, index) => {
+                            let $row;
+                            
+                            if (index === 0) {
+                                $row = $('#kraRowTemplate').contents().clone();
+                                $row.find('.kra-select').val(goal.kra_id);
+                                // Set KRA cell rowspan based on number of goals
+                                $row.find('.kra-cell').attr('rowspan', goals.length);
+                            } else {
+                                $row = $('#goalRowTemplate').contents().clone();
+                                $row.attr('data-kra-id', goal.kra_id);
+                            }
+                            
+                            populateRowWithData($row, goal);
+                            $row.attr('data-goal-id', goal.id);
+                            $('#scorecardTable tbody').append($row);
                         });
-                        
-                        // Update the score calculation
-                        updateScore($row);
-                    } else {
-                        Swal.fire('Error', res.message || 'Error with goal operation', 'error');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('AJAX Error:', xhr.responseText);
-                    Swal.fire('Error', 'There was a problem connecting to the server. Please try again.', 'error');
+                    });
+                    
+                    setTimeout(function() {
+                        initSavedGoals();
+                    }, 100);
+                    
+                } else {
+                    console.log('No existing goals found - adding empty row');
+                    addInitialRow();
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Failed to load goals:', xhr.responseText);
+                addInitialRow();
+            }
+        });
+    }
+
+    // Populate row with goal data
+    function populateRowWithData($row, goal) {
+        $row.find('.goal-input').val(goal.goal || '');
+        $row.find('.measurement-select').val(goal.measurement || 'Savings');
+        $row.find('.weight-input').val(goal.weight || '');
+        $row.find('.target-input').val(goal.target || '');
+        $row.find('.period-select').val(goal.rating_period || 'Annual');
+        $row.find('input[name="jan"]').val(goal.jan_value || '');
+        $row.find('input[name="feb"]').val(goal.feb_value || '');
+        $row.find('input[name="mar"]').val(goal.mar_value || '');
+        $row.find('input[name="apr"]').val(goal.apr_value || '');
+        $row.find('input[name="may"]').val(goal.may_value || '');
+        $row.find('input[name="jun"]').val(goal.jun_value || '');
+        $row.find('input[name="jul"]').val(goal.jul_value || '');
+        $row.find('input[name="aug"]').val(goal.aug_value || '');
+        $row.find('input[name="sep"]').val(goal.sep_value || '');
+        $row.find('input[name="oct"]').val(goal.oct_value || '');
+        $row.find('input[name="nov"]').val(goal.nov_value || '');
+        $row.find('input[name="dec"]').val(goal.dec_value || '');
+        $row.find('.rating-input').val(goal.rating || '');
+        $row.find('.evidence-input').val(goal.evidence || '');
+        
+        updateScore($row);
+    }
+    
+    // Clear form
+    function clearForm() {
+        $('#job_title, #department, #reviewer, #reviewer_designation').val('');
+        $('#scorecardTable tbody').empty();
+        addInitialRow();
+    }
+    
+    // Add initial empty row
+    function addInitialRow() {
+        const $row = $('#kraRowTemplate').contents().clone();
+        $('#scorecardTable tbody').append($row);
+        initSavedGoals();
+    }
+    
+    // Check if KRA already exists for current employee
+    function checkKraExists(kraId, currentRowGoalId = null) {
+        let exists = false;
+        const employeeId = $('#employee_select').val();
+        
+        if (!employeeId || !kraId) return false;
+        
+        // Check in existing rows
+        $('#scorecardTable tbody tr').each(function() {
+            const $row = $(this);
+            const rowGoalId = $row.attr('data-goal-id');
+            const rowKraId = $row.hasClass('kra-row') ? $row.find('.kra-select').val() : $row.attr('data-kra-id');
+            
+            // Skip checking the current row being edited
+            if (currentRowGoalId && rowGoalId === currentRowGoalId) {
+                return true; // continue
+            }
+            
+            if (rowKraId === kraId && rowGoalId) {
+                exists = true;
+                return false; // break
+            }
+        });
+        
+        return exists;
+    }
+    
+    // Remove goal button handler
+    $(document).on('click', '.remove-goal-btn', function() {
+        let $btn = $(this);
+        let $row = $btn.closest('tr');
+        let goalId = $row.attr('data-goal-id');
+        
+        if (!goalId) {
+            // Unsaved row - just remove it
+            Swal.fire({
+                title: 'Remove Row?',
+                text: "Are you sure you want to remove this unsaved row?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, remove it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $row.remove();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Removed!',
+                        text: 'Row has been removed.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                }
+            });
+        } else {
+            // Saved row - confirm deletion
+            Swal.fire({
+                title: 'Delete Goal?',
+                text: "Are you sure you want to delete this saved goal? This action cannot be undone.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#d33'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    deleteGoal(goalId, $row);
                 }
             });
         }
-        
-        // Function to update existing goal data (completely separate from save)
-        function updateGoalData($row) {
-            // Get goal ID (required for updates)
-            let goalId = $row.attr('data-goal-id');
-            
-            if (!goalId) {
-                Swal.fire('Error', 'Cannot update: Goal ID not found', 'error');
-                return;
-            }
-            
-            // Collect form data for update
-            let data = {
-                goal_id: goalId,
-                goal: $row.find('.goal-input').val(),
-                measurement: $row.find('.measurement-select').val(),
-                weight: $row.find('.weight-input').val(),
-                target: $row.find('.target-input').val(),
-                period: $row.find('.period-select').val(),
-                jan: $row.find('input[name="jan"]').val(),
-                feb: $row.find('input[name="feb"]').val(),
-                mar: $row.find('input[name="mar"]').val(),
-                apr: $row.find('input[name="apr"]').val(),
-                may: $row.find('input[name="may"]').val(),
-                jun: $row.find('input[name="jun"]').val(),
-                jul: $row.find('input[name="jul"]').val(),
-                aug: $row.find('input[name="aug"]').val(),
-                sep: $row.find('input[name="sep"]').val(),
-                oct: $row.find('input[name="oct"]').val(),
-                nov: $row.find('input[name="nov"]').val(),
-                dec: $row.find('input[name="dec"]').val(),
-                rating: $row.find('.rating-input').val(),
-                evidence: $row.find('.evidence-input').val()
-            };
-            
-            // Send Ajax request to update endpoint
-            $.ajax({
-                url: '/scorecard/updateGoal',
-                type: 'POST',
-                data: data,
-                dataType: 'json',
-                success: function(res) {
-                    if (res.status === 'success') {
-                        // Disable inputs
-                        $row.find('input, select').prop('disabled', true);
-                        
-                        // Update button visibility
-                        $row.find('.save-goal-btn').hide();
-                        $row.find('.update-goal-btn').hide();
-                        $row.find('.edit-goal-btn').show();
-                        
-                        // Show success message
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success!',
-                            text: 'Your goal has been updated successfully.',
-                            showConfirmButton: false,
-                            timer: 1500
-                        });
-                        
-                        // Update the score calculation
-                        updateScore($row);
-                    } else {
-                        Swal.fire('Error', res.message || 'Error updating goal', 'error');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('AJAX Error:', xhr.responseText);
-                    Swal.fire('Error', 'There was a problem connecting to the server. Please try again.', 'error');
+    });
+    
+    // Delete goal function
+    function deleteGoal(goalId, $row) {
+        $.ajax({
+            url: '/scorecard/deleteGoal',
+            type: 'POST',
+            data: { goal_id: goalId },
+            dataType: 'json',
+            success: function(res) {
+                if (res.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Deleted!',
+                        text: 'Goal has been deleted successfully.',
+                        showConfirmButton: false,
+                        timer: 1500,
+                        willClose: () => {
+                            // Reload goals to refresh the table structure
+                            const employeeId = $('#employee_select').val();
+                            if (employeeId) {
+                                loadExistingGoals(employeeId);
+                            }
+                        }
+                    });
+                } else {
+                    Swal.fire('Error', res.message || 'Failed to delete goal', 'error');
                 }
+            },
+            error: function(xhr, status, error) {
+                console.error('Delete Error:', xhr.responseText);
+                Swal.fire('Error', 'There was a problem connecting to the server. Please try again.', 'error');
+            }
+        });
+    }
+    
+    // Save goal button handler
+    $(document).on('click', '.save-goal-btn', function() {
+        let $btn = $(this);
+        let $row = $btn.closest('tr');
+        
+        // Validate KRA selection
+        let kraId = $row.hasClass('kra-row') ? $row.find('.kra-select').val() : $row.attr('data-kra-id');
+        
+        if (!kraId) {
+            Swal.fire('Error', 'Please select a KRA first', 'error');
+            return;
+        }
+        
+        // Check if KRA already exists
+        if (checkKraExists(kraId)) {
+            Swal.fire({
+                title: 'KRA Already Exists',
+                text: 'This KRA already exists for the selected employee. Please add goals to the existing KRA or select a different KRA.',
+                icon: 'error',
+                confirmButtonText: 'OK'
             });
+            return;
         }
         
-        // Function to update the score display
-        function updateScore($row) {
-            const weight = parseFloat($row.find('.weight-input').val()) || 0;
-            const rating = parseFloat($row.find('.rating-input').val()) || 0;
-            const period = $row.find('.period-select').val();
-            
-            let divisor = 1; // Default for Annual
-            switch (period) {
-                case 'Semi Annual':
-                    divisor = 2;
-                    break;
-                case 'Quarterly':
-                    divisor = 4;
-                    break;
-                case 'Monthly':
-                    divisor = 12;
-                    break;
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "Do you want to save this goal?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, save it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                saveGoalData($row);
             }
-            
-            if (weight > 0 && rating > 0) {
-                const score = (rating / divisor) * weight;
-                $row.find('.score-value')
-                    .text(score.toFixed(2))
-                    .removeClass('bg-danger')
-                    .addClass('bg-success');
-            } else {
-                $row.find('.score-value')
-                    .text('#DIV/0!')
-                    .removeClass('bg-success')
-                    .addClass('bg-danger');
+        });
+    });
+    
+    // Edit goal button handler
+    $(document).on('click', '.edit-goal-btn', function() {
+        let $btn = $(this);
+        let $row = $btn.closest('tr');
+        
+        $row.find('input, select').prop('disabled', false);
+        $btn.hide();
+        $row.find('.update-goal-btn').show();
+        $row.find('.save-goal-btn').hide();
+        $row.find('.remove-goal-btn').show();
+    });
+    
+    // Update goal button handler
+    $(document).on('click', '.update-goal-btn', function() {
+        let $btn = $(this);
+        let $row = $btn.closest('tr');
+        
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "Do you want to update this goal?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, update it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                updateGoalData($row);
             }
+        });
+    });
+    
+    function saveGoalData($row) {
+        let isKraRow = $row.hasClass('kra-row');
+        let kraId;
+        
+        if (isKraRow) {
+            kraId = $row.find('.kra-select').val();
+        } else {
+            kraId = $row.data('kra-id');
         }
         
-        // Function to initialize saved goals with proper button states
-        function initSavedGoals() {
-            $('.kra-row, .goal-row').each(function() {
-                const $row = $(this);
-                if ($row.attr('data-goal-id')) {
-                    // This is a saved goal, show edit button and hide save button
+        let employeeId = $('#employee_select').val();
+        
+        if (!employeeId) {
+            Swal.fire('Error', 'Please select an employee first', 'error');
+            return;
+        }
+        
+        if (!kraId) {
+            Swal.fire('Error', 'KRA is required', 'error');
+            return;
+        }
+        
+        const jobtitle = $('#job_title').val() || null;
+        const department = $('#department').val() || null;
+        const reviewer = $('#reviewer').val() || null;
+        const reviewerDesignation = $('#reviewer_designation').val() || null;
+        
+        let data = {
+            employee_id: employeeId,
+            evaluation_period: $('#evaluation_period').val(),
+            kra_id: kraId,
+            job_title: jobtitle,
+            department: department,
+            reviewer: reviewer,
+            reviewer_designation: reviewerDesignation,
+            goal: $row.find('.goal-input').val(),
+            measurement: $row.find('.measurement-select').val(),
+            weight: $row.find('.weight-input').val(),
+            target: $row.find('.target-input').val(),
+            period: $row.find('.period-select').val(),
+            jan: $row.find('input[name="jan"]').val(),
+            feb: $row.find('input[name="feb"]').val(),
+            mar: $row.find('input[name="mar"]').val(),
+            apr: $row.find('input[name="apr"]').val(),
+            may: $row.find('input[name="may"]').val(),
+            jun: $row.find('input[name="jun"]').val(),
+            jul: $row.find('input[name="jul"]').val(),
+            aug: $row.find('input[name="aug"]').val(),
+            sep: $row.find('input[name="sep"]').val(),
+            oct: $row.find('input[name="oct"]').val(),
+            nov: $row.find('input[name="nov"]').val(),
+            dec: $row.find('input[name="dec"]').val(),
+            rating: $row.find('.rating-input').val(),
+            evidence: $row.find('.evidence-input').val()
+        };
+        
+        console.log('Saving goal data:', data);
+        
+        $.ajax({
+            url: '/scorecard/saveGoal',
+            type: 'POST',
+            data: data,
+            dataType: 'json',
+            success: function(res) {
+                console.log('Save response:', res);
+                
+                if (res.status === 'success') {
+                    lastSavedKraId = kraId;
+                    
+                    // Update the current row instead of reloading everything
+                    $row.attr('data-goal-id', res.goal_id);
+                    $row.find('input, select').prop('disabled', true);
                     $row.find('.save-goal-btn').hide();
                     $row.find('.edit-goal-btn').show();
                     $row.find('.update-goal-btn').hide();
-                    $row.find('.remove-goal-btn').hide(); // Hide remove button for saved rows
-                    $row.find('input, select').prop('disabled', true);
+                    $row.find('.remove-goal-btn').show();
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'Your goal has been saved successfully.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                    
                 } else {
-                    // This is a new goal
-                    $row.find('.save-goal-btn').show();
-                    $row.find('.edit-goal-btn').hide();
-                    $row.find('.update-goal-btn').hide();
-                    $row.find('.remove-goal-btn').show(); // Show remove button for unsaved rows
+                    Swal.fire('Error', res.message || 'Error with goal operation', 'error');
                 }
-            });
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', xhr.responseText);
+                Swal.fire('Error', 'There was a problem connecting to the server. Please try again.', 'error');
+            }
+        });
+    }
+
+    function updateGoalData($row) {
+        let goalId = $row.attr('data-goal-id');
+        
+        if (!goalId) {
+            Swal.fire('Error', 'Cannot update: Goal ID not found', 'error');
+            return;
         }
         
-        // Call init function when page loads
-        initSavedGoals();
+        let data = {
+            goal_id: goalId,
+            goal: $row.find('.goal-input').val(),
+            measurement: $row.find('.measurement-select').val(),
+            weight: $row.find('.weight-input').val(),
+            target: $row.find('.target-input').val(),
+            period: $row.find('.period-select').val(),
+            jan: $row.find('input[name="jan"]').val(),
+            feb: $row.find('input[name="feb"]').val(),
+            mar: $row.find('input[name="mar"]').val(),
+            apr: $row.find('input[name="apr"]').val(),
+            may: $row.find('input[name="may"]').val(),
+            jun: $row.find('input[name="jun"]').val(),
+            jul: $row.find('input[name="jul"]').val(),
+            aug: $row.find('input[name="aug"]').val(),
+            sep: $row.find('input[name="sep"]').val(),
+            oct: $row.find('input[name="oct"]').val(),
+            nov: $row.find('input[name="nov"]').val(),
+            dec: $row.find('input[name="dec"]').val(),
+            rating: $row.find('.rating-input').val(),
+            evidence: $row.find('.evidence-input').val()
+        };
         
-        // When adding new rows, make sure to set the right button visibility
-        // and apply the last saved KRA ID
-        $(document).on('click', '.add-goal-btn', function() {
-            // Add the new row (existing code would handle this)
-            // Then we need to modify it to inherit the KRA
-            setTimeout(function() {
-                $('.kra-row, .goal-row').each(function() {
-                    const $row = $(this);
-                    if (!$row.attr('data-goal-id')) {
-                        // Set button visibility for new row
-                        $row.find('.save-goal-btn').show();
-                        $row.find('.edit-goal-btn').hide();
-                        $row.find('.update-goal-btn').hide();
-                        $row.find('.remove-goal-btn').show(); // Show remove button for new rows
-                        
-                        // Apply the last saved KRA ID if available
-                        if (lastSavedKraId) {
-                            if ($row.hasClass('kra-row')) {
-                                // If it's a KRA row, set the select value
-                                $row.find('.kra-select').val(lastSavedKraId);
-                            } else {
-                                // If it's a goal row, set the data attribute
-                                $row.attr('data-kra-id', lastSavedKraId);
-                            }
-                        }
-                    }
-                });
-            }, 100);
+        console.log('Updating goal data:', data);
+        
+        $.ajax({
+            url: '/scorecard/updateGoal',
+            type: 'POST',
+            data: data,
+            dataType: 'json',
+            success: function(res) {
+                console.log('Update response:', res);
+                
+                if (res.status === 'success') {
+                    // Update the current row instead of reloading everything
+                    $row.find('input, select').prop('disabled', true);
+                    $row.find('.save-goal-btn').hide();
+                    $row.find('.edit-goal-btn').show();
+                    $row.find('.update-goal-btn').hide();
+                    $row.find('.remove-goal-btn').show();
+                    
+                    // Update the score display
+                    updateScore($row);
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'Your goal has been updated successfully.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                    
+                } else {
+                    Swal.fire('Error', res.message || 'Error updating goal', 'error');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', xhr.responseText);
+                Swal.fire('Error', 'There was a problem connecting to the server. Please try again.', 'error');
+            }
         });
+    }
+    
+    function updateScore($row) {
+        const weight = parseFloat($row.find('.weight-input').val()) || 0;
+        const rating = parseFloat($row.find('.rating-input').val()) || 0;
+        const period = $row.find('.period-select').val();
+        
+        let divisor = 1;
+        switch (period) {
+            case 'Semi Annual':
+                divisor = 2;
+                break;
+            case 'Quarterly':
+                divisor = 4;
+                break;
+            case 'Monthly':
+                divisor = 12;
+                break;
+        }
+        
+        if (weight > 0 && rating > 0) {
+            const score = (rating / divisor) * weight;
+            $row.find('.score-value')
+                .text(score.toFixed(2))
+                .removeClass('bg-danger')
+                .addClass('bg-success');
+        } else {
+            $row.find('.score-value')
+                .text('#DIV/0!')
+                .removeClass('bg-success')
+                .addClass('bg-danger');
+        }
+    }
+
+    function initSavedGoals() {
+        console.log('Initializing saved goals...');
+        
+        $('#scorecardTable tbody tr').each(function() {
+            const $row = $(this);
+            const goalId = $row.attr('data-goal-id');
+            
+            console.log('Row goal ID:', goalId);
+            
+            if (goalId && goalId !== '') {
+                $row.find('input, select').prop('disabled', true);
+                $row.find('.save-goal-btn').hide();
+                $row.find('.edit-goal-btn').show();
+                $row.find('.update-goal-btn').hide();
+                $row.find('.remove-goal-btn').show(); // Show delete button for saved goals
+                console.log('Set as saved goal');
+            } else {
+                $row.find('input, select').prop('disabled', false);
+                $row.find('.save-goal-btn').show();
+                $row.find('.edit-goal-btn').hide();
+                $row.find('.update-goal-btn').hide();
+                $row.find('.remove-goal-btn').show();
+                console.log('Set as unsaved goal');
+            }
+            
+            updateScore($row);
+        });
+    }
+    
+    // Add goal button handler
+    $(document).on('click', '.add-goal-btn', function() {
+        const $currentRow = $(this).closest('tr');
+        const isKraRow = $currentRow.hasClass('kra-row');
+        
+        if (isKraRow) {
+            // Adding a new KRA row
+            const $newRow = $('#kraRowTemplate').contents().clone();
+            $newRow.find('.save-goal-btn').show();
+            $newRow.find('.edit-goal-btn').hide();
+            $newRow.find('.update-goal-btn').hide();
+            $newRow.find('.remove-goal-btn').show();
+            
+            // Insert after the current row
+            $currentRow.after($newRow);
+        } else {
+            // Adding a goal to existing KRA
+            const kraId = $currentRow.attr('data-kra-id') || $currentRow.find('.kra-select').val();
+            
+            if (!kraId) {
+                Swal.fire('Error', 'Please select a KRA first', 'error');
+                return;
+            }
+            
+            const $newRow = $('#goalRowTemplate').contents().clone();
+            $newRow.attr('data-kra-id', kraId);
+            $newRow.find('.save-goal-btn').show();
+            $newRow.find('.edit-goal-btn').hide();
+            $newRow.find('.update-goal-btn').hide();
+            $newRow.find('.remove-goal-btn').show();
+            
+            // Insert after the current row
+            $currentRow.after($newRow);
+        }
+    });
+    
+    // Score calculation on input change
+    $(document).on('input', '.weight-input, .rating-input', function() {
+        const $row = $(this).closest('tr');
+        updateScore($row);
+    });
+    
+    $(document).on('change', '.period-select', function() {
+        const $row = $(this).closest('tr');
+        updateScore($row);
+    });
+    
+    // Initialize on page load
+    if ($('#scorecardTable tbody tr').length === 0) {
+        addInitialRow();
+    } else {
+        initSavedGoals();
+    }
     });
     // end financial save button 
+

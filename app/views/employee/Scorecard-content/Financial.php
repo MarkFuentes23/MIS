@@ -2,7 +2,7 @@
 
 <div class="container-fluid mt-3">
         <div class="table-responsive kra-table">
-            <table class="table table-bordered table-sm">
+            <table class="table table-bordered table-sm" id="scorecardTable">
                 <thead>
                     <tr class="table-yellow text-center">
                         <th colspan="22" style="text-align: center; vertical-align: middle; background-color: #FFEC19; color: #000; position: relative;">
@@ -58,6 +58,7 @@
             </table>
         </div>
     </div>
+
 
         <template id="kraRowTemplate">
             <tr data-kra-id="" class="kra-row" data-goal-id="">
@@ -167,7 +168,9 @@
                         <button type="button" class="btn btn-sm btn-success add-goal-btn" style="padding: 2px 5px; font-size:8px;">
                             <i class="fas fa-plus"></i>
                         </button>
-                       <button class="btn btn-danger btn-sm remove-goal-btn style="padding: 2px 5px; font-size:8px;"><i class="fas fa-trash"></i></button>
+                        <button type="button" class="btn btn-sm btn-danger remove-goal-btn" style="padding: 2px 5px; font-size: 8px;">
+                            <i class="fas fa-minus"></i>
+                        </button>
                         <button type="button" class="btn btn-sm btn-primary save-goal-btn" style="padding:2px 5px;font-size:8px;" title="Save Goal">
                             Save
                         </button>

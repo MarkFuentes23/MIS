@@ -30,6 +30,9 @@ class ScoreCardController extends Controller {
                 $employee = $this->scoreCardModel->getEmployeeById($employeeId);
                 
                 if ($employee) {
+                    // Debug: log what columns are actually returned
+                    error_log("Employee data: " . print_r($employee, true));
+                    
                     echo json_encode([
                         'status' => 'success',
                         'data' => $employee
@@ -60,6 +63,37 @@ class ScoreCardController extends Controller {
         exit;
     }
     
+    // Load existing goals
+    public function loadGoals() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
+                $employeeId = $_POST['employee_id'] ?? null;
+                $evaluationPeriod = $_POST['evaluation_period'] ?? date('Y');
+                
+                if (!$employeeId) {
+                    throw new Exception('Employee ID is required');
+                }
+                
+                $goals = $this->scoreCardModel->getGoalsForDisplay($employeeId, $evaluationPeriod);
+                
+                echo json_encode([
+                    'status' => 'success',
+                    'data' => $goals,
+                    'count' => count($goals),
+                    'employee_id' => $employeeId,
+                    'evaluation_period' => $evaluationPeriod
+                ]);
+                
+            } catch (Exception $e) {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => $e->getMessage()
+                ]);
+            }
+        }
+        exit;
+    }
+    
     // Save goal via AJAX
     public function saveGoal() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -67,7 +101,7 @@ class ScoreCardController extends Controller {
                 // Get employee scorecard data
                 $employeeId = $_POST['employee_id'] ?? null;
                 $evaluationPeriod = $_POST['evaluation_period'] ?? date('Y');
-                $positionTitle = $_POST['position_title'] ?? '';
+                $jobTitle = $_POST['job_title'] ?? '';
                 $department = $_POST['department'] ?? '';
                 $reviewer = $_POST['reviewer'] ?? '';
                 $reviewerDesignation = $_POST['reviewer_designation'] ?? '';
@@ -77,9 +111,28 @@ class ScoreCardController extends Controller {
                     throw new Exception('Employee ID is required');
                 }
                 
+                // Ensure we have a valid KRA ID
+                $kraId = $_POST['kra_id'] ?? null;
+                
+                if (!$kraId) {
+                    throw new Exception('KRA is required');
+                }
+                
+                // Validate that KRA ID exists
+                $validKra = $this->scoreCardModel->validateKraId($kraId);
+                if (!$validKra) {
+                    throw new Exception('Invalid KRA selected');
+                }
+                
+                // Check if KRA already exists for this employee and evaluation period
+                $existingKra = $this->scoreCardModel->checkKraExists($employeeId, $evaluationPeriod, $kraId);
+                if ($existingKra) {
+                    throw new Exception('This KRA already exists for the selected employee. Please add goals to the existing KRA or select a different KRA.');
+                }
+                
                 // Get or create scorecard
                 $scorecard = $this->scoreCardModel->getOrCreateScorecard(
-                    $employeeId, $evaluationPeriod, $positionTitle, 
+                    $employeeId, $evaluationPeriod, $jobTitle, 
                     $department, $reviewer, $reviewerDesignation
                 );
                 
@@ -106,28 +159,16 @@ class ScoreCardController extends Controller {
                     'evidence' => $_POST['evidence'] ?? null
                 ];
                 
-                // Ensure we have a valid KRA ID
-                $kraId = $_POST['kra_id'] ?? null;
-                
-                if (!$kraId) {
-                    throw new Exception('KRA is required');
-                }
-                
-                // Validate that KRA ID exists
-                $validKra = $this->scoreCardModel->validateKraId($kraId);
-                if (!$validKra) {
-                    throw new Exception('Invalid KRA selected');
-                }
-                
                 // Save goal
                 $goalId = $this->scoreCardModel->saveGoal($scorecard['id'], $kraId, $perspective, $goalData);
                 
                 if ($goalId) {
-                    echo json_encode([
+                echo json_encode([
                         'status' => 'success',
                         'message' => 'Goal saved successfully',
                         'goal_id' => $goalId,
-                        'kra_id' => $kraId // Return KRA ID for reference
+                        'kra_id' => $kraId,
+                        'employee_id' => $employeeId
                     ]);
                 } else {
                     throw new Exception('Failed to save goal');
@@ -142,6 +183,7 @@ class ScoreCardController extends Controller {
         }
         exit;
     }
+
     
     // Update goal via AJAX
     public function updateGoal() {
@@ -197,36 +239,62 @@ class ScoreCardController extends Controller {
         }
         exit;
     }
-    
-    // Load existing goals for an employee
-    public function loadGoals() {
+
+    public function deleteGoal() {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        try {
+            $goalId = $_POST['goal_id'] ?? null;
+            
+            if (!$goalId) {
+                throw new Exception('Goal ID is required');
+            }
+            
+            // Verify goal exists before deleting
+            $goal = $this->scoreCardModel->getGoalById($goalId);
+            if (!$goal) {
+                throw new Exception('Goal not found');
+            }
+            
+            // Delete the goal
+            $result = $this->scoreCardModel->deleteGoal($goalId);
+            
+            if ($result) {
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Goal deleted successfully'
+                ]);
+            } else {
+                throw new Exception('Failed to delete goal');
+            }
+            
+        } catch (Exception $e) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+    exit;
+    }
+
+    public function checkKraExists() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $employeeId = $_POST['employee_id'] ?? null;
                 $evaluationPeriod = $_POST['evaluation_period'] ?? date('Y');
-                $perspective = $_POST['perspective'] ?? 'financial';
+                $kraId = $_POST['kra_id'] ?? null;
+                $currentGoalId = $_POST['current_goal_id'] ?? null;
                 
-                if (!$employeeId) {
-                    throw new Exception('Employee ID is required');
+                if (!$employeeId || !$kraId) {
+                    throw new Exception('Employee ID and KRA ID are required');
                 }
                 
-                // Get scorecard
-                $scorecard = $this->scoreCardModel->getScorecardByEmployee($employeeId, $evaluationPeriod);
+                $exists = $this->scoreCardModel->checkKraExists($employeeId, $evaluationPeriod, $kraId, $currentGoalId);
                 
-                if ($scorecard) {
-                    // Get goals for this perspective
-                    $goals = $this->scoreCardModel->getGoalsByScorecard($scorecard['id'], $perspective);
-                    
-                    echo json_encode([
-                        'status' => 'success',
-                        'data' => $goals
-                    ]);
-                } else {
-                    echo json_encode([
-                        'status' => 'success',
-                        'data' => []
-                    ]);
-                }
+                echo json_encode([
+                    'status' => 'success',
+                    'exists' => $exists
+                ]);
                 
             } catch (Exception $e) {
                 echo json_encode([
@@ -237,4 +305,4 @@ class ScoreCardController extends Controller {
         }
         exit;
     }
-}
+    }

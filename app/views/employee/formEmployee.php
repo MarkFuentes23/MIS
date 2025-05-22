@@ -1,4 +1,17 @@
 
+<?php
+// Add this at the top of your view file
+$selectedEmployeeId = $_GET['employee_id'] ?? ($_POST['employee_id'] ?? null);
+$evaluationPeriod = $_GET['evaluation_period'] ?? date('Y');
+$existingGoals = [];
+$employeeData = null;
+
+if ($selectedEmployeeId) {
+    $employeeData = $this->scoreCardModel->getEmployeeById($selectedEmployeeId);
+    $existingGoals = $this->scoreCardModel->getGoalsForDisplay($selectedEmployeeId, $evaluationPeriod);
+}
+?>
+
 <link rel="stylesheet" href="/public/css/formEmployee.css?v=<?php echo time(); ?>">
 
     <div class="container-fluid">
@@ -19,12 +32,26 @@
                         <tr>
                             <td class="form-label">Name</td>
                             <td>
-                                <select class="form-value" id="employee_select" name="employee_id" required>
-                                    <option value="">Select Name</option>
-                                    <?php foreach($data['employees'] as $employee): ?>
-                                        <option value="<?= $employee['id'] ?>"><?= $employee['lastname'] . ', ' . $employee['firstname'] . ' ' . $employee['middlename'] . ' ' . $employee['suffix'] ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                            <select class="form-value" id="employee_select" name="employee_id" required>
+                                <option value="">Select Name</option>
+                                <?php foreach($data['employees'] as $employee): ?>
+                                <option value="<?= $employee['id'] ?>"
+                                    <?= $selectedEmployeeId == $employee['id'] ? 'selected' : '' ?>>
+                                    <?= 
+                                        $employee['firstname']
+                                        . ( ! empty($employee['middlename'])
+                                            ? ' ' . strtoupper(substr($employee['middlename'], 0, 1)) . '.'
+                                            : ''
+                                        )
+                                        . ' ' . $employee['lastname']
+                                        . ( ! empty($employee['suffix'])
+                                            ? ' ' . $employee['suffix']
+                                            : ''
+                                        )
+                                    ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
                             </td>
                             <td class="form-label">Evaluation Period</td>
                             <td><input type="text" class="form-value" id="evaluation_period" value="2025" readonly></td>
@@ -32,9 +59,9 @@
                         
                         <tr>
                             <td class="form-label">Position Title</td>
-                            <td><input type="text" class="form-value" id="job_title" readonly></td>
+                            <td><input type="text" class="form-value" id="job_title" value="<?= $employeeData['position_title'] ?? '' ?>" readonly></td>
                             <td class="form-label">Department</td>
-                            <td><input type="text" class="form-value" id="department" readonly></td>
+                            <td><input type="text" class="form-value" id="department" value="<?= $employeeData['department'] ?? '' ?>" readonly></td>
                         </tr>
                         
                         <tr>

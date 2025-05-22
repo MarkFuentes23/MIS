@@ -20,9 +20,66 @@ class ScoreCardModel extends Model {
             $stmt = $this->db->prepare("SELECT * FROM scorecards WHERE id = ?");
             $stmt->execute([$scorecardId]);
             $scorecard = $stmt->fetch();
+        } else {
+            // Update existing scorecard with new info if provided
+            if ($positionTitle || $department || $reviewer || $reviewerDesignation) {
+                $updateSql = "UPDATE scorecards SET ";
+                $updateParams = [];
+                $updateFields = [];
+                
+                if ($positionTitle) {
+                    $updateFields[] = "position_title = ?";
+                    $updateParams[] = $positionTitle;
+                }
+                if ($department) {
+                    $updateFields[] = "department = ?";
+                    $updateParams[] = $department;
+                }
+                if ($reviewer) {
+                    $updateFields[] = "reviewer = ?";
+                    $updateParams[] = $reviewer;
+                }
+                if ($reviewerDesignation) {
+                    $updateFields[] = "reviewer_designation = ?";
+                    $updateParams[] = $reviewerDesignation;
+                }
+                
+                if (!empty($updateFields)) {
+                    $updateSql .= implode(", ", $updateFields);
+                    $updateSql .= " WHERE id = ?";
+                    $updateParams[] = $scorecard['id'];
+                    
+                    $updateStmt = $this->db->prepare($updateSql);
+                    $updateStmt->execute($updateParams);
+                }
+            }
         }
         
         return $scorecard;
+    }
+    
+    // Check if KRA already exists for employee in given period
+    public function checkKraExists($employeeId, $evaluationPeriod, $kraId, $excludeGoalId = null) {
+        $sql = "SELECT COUNT(*) as count 
+                FROM scorecard_goals sg 
+                JOIN scorecards s ON sg.scorecard_id = s.id 
+                WHERE s.employee_id = ? 
+                AND s.evaluation_period = ? 
+                AND sg.kra_id = ?";
+        
+        $params = [$employeeId, $evaluationPeriod, $kraId];
+        
+        // Exclude specific goal ID if provided (for updates)
+        if ($excludeGoalId) {
+            $sql .= " AND sg.id != ?";
+            $params[] = $excludeGoalId;
+        }
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $result = $stmt->fetch();
+        
+        return $result['count'] > 0;
     }
     
     // Validate that a KRA ID exists in the database
@@ -158,10 +215,10 @@ class ScoreCardModel extends Model {
         $stmt->execute([$id]);
         return $stmt->fetch();
     }
-    
+
     // Get all employees
     public function getAllEmployees() {
-        $stmt = $this->db->query("SELECT id, first_name, last_name FROM employees_info ORDER BY last_name ASC");
+        $stmt = $this->db->query("SELECT id, firstname, lastname, middlename, suffix FROM employees_info ORDER BY lastname ASC");
         return $stmt->fetchAll();
     }
     
@@ -173,7 +230,7 @@ class ScoreCardModel extends Model {
     }
     
     // Update existing goal
-   public function updateGoal($goalId, $goalData) {
+    public function updateGoal($goalId, $goalData) {
         if (!$goalId) return false;
         
         $sql = "UPDATE scorecard_goals SET 
@@ -233,19 +290,67 @@ class ScoreCardModel extends Model {
         return false;
     }
     
-    // Delete a goal
+    // Enhanced delete goal with proper cleanup
     public function deleteGoal($goalId) {
         if (!$goalId) return false;
         
-        $stmt = $this->db->prepare("DELETE FROM scorecard_goals WHERE id = ?");
-        return $stmt->execute([$goalId]);
+        try {
+            $this->db->beginTransaction();
+            
+            // First, get goal details before deletion
+            $goalSql = "SELECT sg.*, s.employee_id, s.evaluation_period 
+                       FROM scorecard_goals sg 
+                       JOIN scorecards s ON sg.scorecard_id = s.id 
+                       WHERE sg.id = ?";
+            $goalStmt = $this->db->prepare($goalSql);
+            $goalStmt->execute([$goalId]);
+            $goalData = $goalStmt->fetch();
+            
+            if (!$goalData) {
+                throw new Exception('Goal not found');
+            }
+            
+            // Delete the goal
+            $deleteSql = "DELETE FROM scorecard_goals WHERE id = ?";
+            $deleteStmt = $this->db->prepare($deleteSql);
+            $result = $deleteStmt->execute([$goalId]);
+            
+            if (!$result) {
+                throw new Exception('Failed to delete goal');
+            }
+            
+            $this->db->commit();
+            return true;
+            
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            error_log("Delete goal error: " . $e->getMessage());
+            return false;
+        }
     }
     
     // Get goal details by ID
     public function getGoalById($goalId) {
-        $stmt = $this->db->prepare("SELECT * FROM scorecard_goals WHERE id = ?");
+        $stmt = $this->db->prepare("SELECT sg.*, s.employee_id, s.evaluation_period 
+                                   FROM scorecard_goals sg 
+                                   JOIN scorecards s ON sg.scorecard_id = s.id 
+                                   WHERE sg.id = ?");
         $stmt->execute([$goalId]);
         return $stmt->fetch();
+    }
+    
+    // Load goals for employee
+    public function loadGoals($employeeId, $evaluationPeriod) {
+        $sql = "SELECT sg.*, k.kra as kra_name
+                FROM scorecard_goals sg
+                JOIN scorecards s ON sg.scorecard_id = s.id
+                JOIN kras k ON sg.kra_id = k.id
+                WHERE s.employee_id = ? AND s.evaluation_period = ?
+                ORDER BY sg.kra_id, sg.id";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$employeeId, $evaluationPeriod]);
+        return $stmt->fetchAll();
     }
     
     // Get total score for a scorecard
@@ -347,4 +452,19 @@ class ScoreCardModel extends Model {
         $stmt->execute([$scorecardId, $perspective]);
         return $stmt->fetch();
     }
+    
+    // Get goals for display
+    public function getGoalsForDisplay($employeeId, $evaluationPeriod) {
+        $sql = "SELECT sg.*, k.kra as kra_name, s.id as scorecard_id
+                FROM scorecard_goals sg 
+                JOIN kras k ON sg.kra_id = k.id 
+                JOIN scorecards s ON sg.scorecard_id = s.id
+                WHERE s.employee_id = ? AND s.evaluation_period = ?
+                ORDER BY k.kra, sg.id";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$employeeId, $evaluationPeriod]);
+        return $stmt->fetchAll();
+    }
 }
+?>
