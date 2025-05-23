@@ -124,12 +124,6 @@ class ScoreCardController extends Controller {
                     throw new Exception('Invalid KRA selected');
                 }
                 
-                // Check if KRA already exists for this employee and evaluation period
-                $existingKra = $this->scoreCardModel->checkKraExists($employeeId, $evaluationPeriod, $kraId);
-                if ($existingKra) {
-                    throw new Exception('This KRA already exists for the selected employee. Please add goals to the existing KRA or select a different KRA.');
-                }
-                
                 // Get or create scorecard
                 $scorecard = $this->scoreCardModel->getOrCreateScorecard(
                     $employeeId, $evaluationPeriod, $jobTitle, 

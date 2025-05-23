@@ -15,6 +15,7 @@
     }
     // end collapsible
 
+
     // start of scorecard
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize all KRA sections
@@ -144,6 +145,7 @@
     // end of scorecard
 
 
+
     // employee auto populate
     document.addEventListener('DOMContentLoaded', function() {
     const employeeSelect = document.getElementById('employee_select');
@@ -186,6 +188,7 @@
     
 
 
+    
     // financial save button 
     $(document).ready(function() {
         let lastSavedKraId = null;
@@ -295,25 +298,6 @@
         function addGoalToKRA(kraId) {
             console.log('Adding goal to KRA:', kraId);
             
-            // Double-check: make sure all existing rows for this KRA are saved
-            let hasUnsavedRows = false;
-            $('#scorecardTable tbody tr[data-kra-id="' + kraId + '"]').each(function() {
-                const goalId = $(this).attr('data-goal-id');
-                if (!goalId || goalId === '') {
-                    hasUnsavedRows = true;
-                    return false; // break
-                }
-            });
-            
-            if (hasUnsavedRows) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Cannot Add Goal',
-                    text: 'Please save all existing rows for this KRA first.'
-                });
-                return; // STOP - don't add row
-            }
-            
             // Increment goal count for this KRA
             if (!goalsByKRA[kraId]) {
                 goalsByKRA[kraId] = 0;
@@ -326,9 +310,9 @@
                 $kraCell.attr('rowspan', goalsByKRA[kraId]);
             }
             
-            // Create new goal row
+            // Create new goal row (NOT KRA row - just goal row)
             const $newRow = $('#goalRowTemplate').contents().clone();
-            $newRow.attr('data-kra-id', kraId);
+            $newRow.attr('data-kra-id', kraId); // Set the KRA ID automatically
             
             // Find the correct position to insert (after the last row of this KRA)
             const $kraRows = $('#scorecardTable tbody tr[data-kra-id="' + kraId + '"]');
@@ -432,7 +416,6 @@
             $row.find('input[name="oct"]').val(goal.oct_value || '');
             $row.find('input[name="nov"]').val(goal.nov_value || '');
             $row.find('input[name="dec"]').val(goal.dec_value || '');
-            $row.find('.rating-input').val(goal.rating || '');
             $row.find('.evidence-input').val(goal.evidence || '');
         }
             
@@ -451,31 +434,16 @@
             initSavedGoals();
         }
         
-        // Check if KRA already exists for current employee
+        // Check if KRA already exists for current employee - MODIFIED: Only for first goal of KRA
         function checkKraExists(kraId, currentRowGoalId = null) {
             let exists = false;
             const employeeId = $('#employee_select').val();
             
             if (!employeeId || !kraId) return false;
             
-            // Check in existing rows
-            $('#scorecardTable tbody tr').each(function() {
-                const $row = $(this);
-                const rowGoalId = $row.attr('data-goal-id');
-                const rowKraId = $row.hasClass('kra-row') ? $row.find('.kra-select').val() : $row.attr('data-kra-id');
-                
-                // Skip checking the current row being edited
-                if (currentRowGoalId && rowGoalId === currentRowGoalId) {
-                    return true; // continue
-                }
-                
-                if (rowKraId === kraId && rowGoalId) {
-                    exists = true;
-                    return false; // break
-                }
-            });
-            
-            return exists;
+            // Only check if this is the first goal for this KRA (KRA row)
+            // If there are already goals for this KRA, allow adding more
+            return goalsByKRA[kraId] && goalsByKRA[kraId] > 0;
         }
         
         // Delete goal function
@@ -564,7 +532,6 @@
                 oct: $row.find('input[name="oct"]').val(),
                 nov: $row.find('input[name="nov"]').val(),
                 dec: $row.find('input[name="dec"]').val(),
-                rating: $row.find('.rating-input').val(),
                 evidence: $row.find('.evidence-input').val()
             };
             
@@ -635,7 +602,6 @@
                 oct: $row.find('input[name="oct"]').val(),
                 nov: $row.find('input[name="nov"]').val(),
                 dec: $row.find('input[name="dec"]').val(),
-                rating: $row.find('.rating-input').val(),
                 evidence: $row.find('.evidence-input').val()
             };
             
@@ -710,7 +676,7 @@
 
         // EVENT HANDLERS
         
-        // Add goal button click handler
+        // Add goal button click handler - SIMPLIFIED VALIDATION
         $(document).on('click', '.add-goal-btn', function() {
             const $btn = $(this);
             const $row = $btn.closest('tr');
@@ -726,10 +692,10 @@
                         title: 'KRA Required',
                         text: 'Please select a KRA first'
                     });
-                    return; // STOP HERE - don't add any row
+                    return;
                 }
                 
-                // Check if current row is saved first
+                // Only check if current row is saved for KRA rows
                 const currentGoalId = $row.attr('data-goal-id');
                 if (!currentGoalId) {
                     Swal.fire({
@@ -737,7 +703,7 @@
                         title: 'Save Current Row First',
                         text: 'Please save the current row before adding a new goal.'
                     });
-                    return; // STOP HERE - don't add any row
+                    return;
                 }
             } else if (!kraId) {
                 Swal.fire({
@@ -745,33 +711,13 @@
                     title: 'Error',
                     text: 'Please select a KRA first'
                 });
-                return; // STOP HERE - don't add any row
+                return;
             }
             
-            // Additional check: make sure there are no unsaved rows for this KRA
-            let hasUnsavedRows = false;
-            $('#scorecardTable tbody tr[data-kra-id="' + kraId + '"]').each(function() {
-                const goalId = $(this).attr('data-goal-id');
-                if (!goalId || goalId === '') {
-                    hasUnsavedRows = true;
-                    return false; // break
-                }
-            });
-            
-            if (hasUnsavedRows) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Save All Rows First',
-                    text: 'Please save all existing rows for this KRA before adding a new goal.'
-                });
-                return; // STOP HERE - don't add any row
-            }
-            
-            // Only proceed if ALL validations pass
+            // Proceed to add goal to the same KRA
             console.log('Add goal button clicked for KRA:', kraId);
             addGoalToKRA(kraId);
         });
-
 
         // Remove goal button handler
         $(document).on('click', '.remove-goal-btn', function() {
@@ -783,7 +729,7 @@
             removeGoalFromKRA(goalId, $row, kraId);
         });
             
-        // Save goal button handler
+        // Save goal button handler - REMOVED KRA DUPLICATE CHECK
         $(document).on('click', '.save-goal-btn', function() {
             let $btn = $(this);
             let $row = $btn.closest('tr');
@@ -796,16 +742,7 @@
                 return;
             }
             
-            // Check if KRA already exists
-            if (checkKraExists(kraId)) {
-                Swal.fire({
-                    title: 'KRA Already Exists',
-                    text: 'This KRA already exists for the selected employee. Please add goals to the existing KRA or select a different KRA.',
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                });
-                return;
-            }
+            // REMOVED: Check if KRA already exists - now allows multiple goals per KRA
             
             Swal.fire({
                 title: 'Are you sure?',
