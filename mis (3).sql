@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: May 21, 2025 at 08:54 AM
+-- Generation Time: May 23, 2025 at 08:45 AM
 -- Server version: 9.1.0
 -- PHP Version: 8.3.14
 
@@ -34,16 +34,16 @@ CREATE TABLE IF NOT EXISTS `departments` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `departments`
 --
 
 INSERT INTO `departments` (`id`, `department`, `created_at`, `updated_at`) VALUES
-(4, 'job', '2025-05-09 01:45:56', NULL),
-(2, 'asdf', '2025-05-06 08:27:44', NULL),
-(3, 'asdf', '2025-05-06 08:37:31', NULL);
+(5, 'MIS', '2025-05-22 02:36:15', NULL),
+(6, 'Accounting', '2025-05-22 02:36:26', NULL),
+(7, 'BCI', '2025-05-22 02:36:40', NULL);
 
 -- --------------------------------------------------------
 
@@ -65,16 +65,16 @@ CREATE TABLE IF NOT EXISTS `employees_info` (
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `employees_info`
 --
 
 INSERT INTO `employees_info` (`id`, `firstname`, `lastname`, `middlename`, `suffix`, `location`, `department`, `job_title`, `evaluation`, `created_at`, `updated_at`) VALUES
-(20, 'BCI', 'asdfasdf', 'asdfasdf', 'jr', 'asdfas', 'asdf', 'asdfa', 1.0, '2025-05-07 10:31:07', '2025-05-09 09:46:30'),
-(23, 'hello', 'world', 'Z', 'jr', 'asdfas', 'asdf', 'asdfasdf', 1.0, '2025-05-09 09:45:41', '2025-05-09 09:45:41'),
-(26, 'topher', 'azores', 'Z', 'jr', 'job', 'job', 'job', 2.0, '2025-05-15 09:07:10', '2025-05-15 09:07:19');
+(27, 'Mark Anthony', 'Fuentes', 'T', NULL, 'Edsa', 'MIS', 'Developer', 0.0, '2025-05-22 10:38:07', '2025-05-22 10:38:07'),
+(28, 'Christoper', 'Reboton', 'J', NULL, 'Gabihan Trucking', 'Accounting', 'Accounting', 0.0, '2025-05-22 10:38:31', '2025-05-22 10:38:31'),
+(29, 'John', 'Cenna', 'Y.', NULL, 'Mabalacat', 'BCI', 'UI Designer', 0.0, '2025-05-22 10:39:02', '2025-05-22 10:39:02');
 
 -- --------------------------------------------------------
 
@@ -132,16 +132,16 @@ CREATE TABLE IF NOT EXISTS `job_titles` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `job_titles`
 --
 
 INSERT INTO `job_titles` (`id`, `job_title`, `created_at`, `updated_at`) VALUES
-(8, 'job', '2025-05-09 01:45:51', NULL),
-(6, 'asdfa', '2025-05-07 02:30:01', NULL),
-(7, 'asdfasdf', '2025-05-07 02:31:11', NULL);
+(9, 'Accounting', '2025-05-22 02:35:47', NULL),
+(10, 'UI Designer', '2025-05-22 02:35:57', NULL),
+(11, 'Developer', '2025-05-22 02:36:08', NULL);
 
 -- --------------------------------------------------------
 
@@ -157,14 +157,16 @@ CREATE TABLE IF NOT EXISTS `kras` (
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `kras`
 --
 
 INSERT INTO `kras` (`id`, `kra`, `description`, `created_at`, `updated_at`) VALUES
-(1, 'financial', NULL, '2025-05-21 01:28:14', '2025-05-21 01:28:14');
+(1, 'FInance', NULL, '2025-05-21 01:28:14', '2025-05-22 02:35:19'),
+(2, 'Accounting', NULL, '2025-05-22 02:37:36', '2025-05-22 02:37:36'),
+(3, 'Position', NULL, '2025-05-22 02:37:40', '2025-05-22 02:37:40');
 
 -- --------------------------------------------------------
 
@@ -179,17 +181,16 @@ CREATE TABLE IF NOT EXISTS `locations` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `locations`
 --
 
 INSERT INTO `locations` (`id`, `location`, `created_at`, `updated_at`) VALUES
-(1, 'asdfas', '2025-05-06 03:48:20', NULL),
-(2, 'asdf', '2025-05-06 08:26:23', NULL),
-(3, 'ortigas', '2025-05-06 08:27:38', NULL),
-(4, 'job', '2025-05-09 01:46:03', NULL);
+(7, 'Gabihan Trucking', '2025-05-22 02:37:22', NULL),
+(6, 'Mabalacat', '2025-05-22 02:37:00', NULL),
+(5, 'Edsa', '2025-05-22 02:36:45', '2025-05-22 02:36:50');
 
 -- --------------------------------------------------------
 
@@ -210,16 +211,16 @@ CREATE TABLE IF NOT EXISTS `scorecards` (
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_scorecards_employee_period` (`employee_id`,`evaluation_period`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `scorecards`
 --
 
 INSERT INTO `scorecards` (`id`, `employee_id`, `evaluation_period`, `position_title`, `department`, `reviewer`, `reviewer_designation`, `created_at`, `updated_at`) VALUES
-(7, 20, '2025', 'asdfa', 'asdf', '', '', '2025-05-21 05:16:13', '2025-05-21 05:16:13'),
-(8, 26, '2025', 'job', 'job', 'job', 'job', '2025-05-21 05:32:23', '2025-05-21 05:32:23'),
-(9, 23, '2025', 'asdfasdf', 'asdf', '', '', '2025-05-21 06:03:04', '2025-05-21 06:03:04');
+(16, 28, '2025', 'Accounting', 'Accounting', '', '', '2025-05-23 03:59:13', '2025-05-23 03:59:13'),
+(17, 27, '2025', 'Developer', 'MIS', '', '', '2025-05-23 04:00:30', '2025-05-23 04:00:30'),
+(18, 29, '2025', 'UI Designer', 'BCI', '', '', '2025-05-23 05:09:47', '2025-05-23 05:09:47');
 
 -- --------------------------------------------------------
 
@@ -258,37 +259,18 @@ CREATE TABLE IF NOT EXISTS `scorecard_goals` (
   PRIMARY KEY (`id`),
   KEY `idx_scg_scorecard` (`scorecard_id`),
   KEY `idx_scg_kra` (`kra_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=62 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=138 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `scorecard_goals`
 --
 
 INSERT INTO `scorecard_goals` (`id`, `scorecard_id`, `kra_id`, `perspective`, `goal`, `measurement`, `weight`, `target`, `rating_period`, `jan_value`, `feb_value`, `mar_value`, `apr_value`, `may_value`, `jun_value`, `jul_value`, `aug_value`, `sep_value`, `oct_value`, `nov_value`, `dec_value`, `rating`, `evidence`, `score`, `created_at`, `updated_at`) VALUES
-(38, 7, 1, 'financial', 'asfddasd', 'Revenue', 1.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 05:16:13', '2025-05-21 05:16:13'),
-(39, 7, 1, 'financial', 'asfddasd', 'Savings', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 05:31:41', '2025-05-21 05:31:41'),
-(40, 8, 1, 'financial', 'asfddasd', 'Revenue', 1.00, 'sdfasdfasdfasdf', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 05:32:23', '2025-05-21 05:32:23'),
-(41, 7, 1, 'financial', 'asfddasd', 'Savings', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 05:44:31', '2025-05-21 05:44:31'),
-(42, 7, 1, 'financial', 'asdfasd', 'Percentage', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 05:44:39', '2025-05-21 05:44:39'),
-(43, 7, 1, 'financial', 'asfddasd', 'Savings', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 05:50:39', '2025-05-21 05:50:39'),
-(44, 7, 1, 'financial', 'asfddasd', 'Savings', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 05:50:48', '2025-05-21 05:50:48'),
-(45, 8, 1, 'financial', 'asfddasd', 'Revenue', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 05:57:15', '2025-05-21 05:57:15'),
-(46, 7, 1, 'financial', 'asfddasd', 'Savings', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 06:00:21', '2025-05-21 06:00:21'),
-(47, 9, 1, 'financial', 'asfddasd', 'Savings', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 06:03:04', '2025-05-21 06:03:04'),
-(48, 8, 1, 'financial', 'asfddasd', 'Savings', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 06:07:04', '2025-05-21 06:07:04'),
-(49, 8, 1, 'financial', 'asdfasd', 'Revenue', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 06:07:27', '2025-05-21 06:07:27'),
-(50, 7, 1, 'financial', 'asfddasd', 'Revenue', 1.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 06:17:31', '2025-05-21 06:17:31'),
-(51, 7, 1, 'financial', 'asfddasd', 'Savings', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 06:17:42', '2025-05-21 06:17:42'),
-(52, 7, 1, 'financial', 'asfddasd', 'Revenue', 2.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 06:24:11', '2025-05-21 06:24:11'),
-(53, 7, 1, 'financial', 'asfddasd', 'Savings', 2.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 06:35:03', '2025-05-21 06:35:03'),
-(54, 9, 1, 'financial', 'asfddasd', 'Revenue', 1.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 07:11:14', '2025-05-21 07:11:14'),
-(55, 7, 1, 'financial', 'asfddasd', 'Savings', 0.00, '', 'Monthly', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 07:44:56', '2025-05-21 07:45:24'),
-(56, 7, 1, 'financial', 'asfddasd', 'Savings', 1.00, 'sdfasdfasdfasdf', 'Semi Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 08:02:03', '2025-05-21 08:02:03'),
-(57, 7, 1, 'financial', 'asfddasd', 'Savings', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 08:03:46', '2025-05-21 08:03:46'),
-(58, 7, 1, 'financial', 'asfddasd', 'Percentage', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 08:03:54', '2025-05-21 08:03:54'),
-(59, 8, 1, 'financial', '', 'Savings', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 08:10:20', '2025-05-21 08:10:20'),
-(60, 8, 1, 'financial', 'asdfasd', 'Savings', 0.00, '', 'Semi Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 08:10:28', '2025-05-21 08:10:28'),
-(61, 8, 1, 'financial', 'asfddasd', 'Savings', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-21 08:52:46', '2025-05-21 08:52:46');
+(126, 17, 2, 'financial', '', 'Savings', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-23 06:19:26', '2025-05-23 06:19:26'),
+(130, 17, 2, 'financial', 'asfddasd', 'Savings', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, '', NULL, '2025-05-23 06:27:53', '2025-05-23 06:27:53'),
+(131, 17, 1, 'financial', '', 'Savings', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, '', NULL, '2025-05-23 06:28:06', '2025-05-23 06:28:06'),
+(132, 16, 1, 'financial', '', 'Savings', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-23 06:40:30', '2025-05-23 06:40:30'),
+(137, 18, 1, 'financial', '', 'Savings', 0.00, '', 'Annual', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', 0.00, '2025-05-23 06:51:42', '2025-05-23 06:51:42');
 
 -- --------------------------------------------------------
 
