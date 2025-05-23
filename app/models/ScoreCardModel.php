@@ -466,5 +466,72 @@ class ScoreCardModel extends Model {
         $stmt->execute([$employeeId, $evaluationPeriod]);
         return $stmt->fetchAll();
     }
-}
+
+    public function getCalculationsForEmployee($employeeId, $evaluationPeriod, $perspective) {
+    $sql = "SELECT 
+                SUM(sg.weight) as total_weight,
+                SUM(CASE 
+                    WHEN sg.rating IS NOT NULL AND sg.weight IS NOT NULL THEN
+                        (sg.rating / 
+                            CASE sg.rating_period
+                                WHEN 'Annual' THEN 1
+                                WHEN 'Semi Annual' THEN 2
+                                WHEN 'Quarterly' THEN 4
+                                WHEN 'Monthly' THEN 12
+                                ELSE 1
+                            END
+                        ) * sg.weight
+                    ELSE 0
+                END) as total_score
+            FROM scorecard_goals sg
+            JOIN scorecards s ON sg.scorecard_id = s.id
+            WHERE s.employee_id = ? 
+            AND s.evaluation_period = ? 
+            AND sg.perspective = ?";
+    
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute([$employeeId, $evaluationPeriod, $perspective]);
+    return $stmt->fetch();
+    }
+
+// Get all calculations by perspective for an employee
+    public function getAllCalculationsByPerspective($employeeId, $evaluationPeriod) {
+        $perspectives = ['financial', 'customer', 'internal', 'learning'];
+        $results = [];
+        
+        foreach ($perspectives as $perspective) {
+            $results[$perspective] = $this->getCalculationsForEmployee($employeeId, $evaluationPeriod, $perspective);
+        }
+        
+        return $results;
+    }
+
+
+// Get total calculations for all perspectives
+    public function getTotalCalculations($employeeId, $evaluationPeriod) {
+        $sql = "SELECT 
+                    SUM(sg.weight) as grand_total_weight,
+                    SUM(CASE 
+                        WHEN sg.rating IS NOT NULL AND sg.weight IS NOT NULL THEN
+                            (sg.rating / 
+                                CASE sg.rating_period
+                                    WHEN 'Annual' THEN 1
+                                    WHEN 'Semi Annual' THEN 2
+                                    WHEN 'Quarterly' THEN 4
+                                    WHEN 'Monthly' THEN 12
+                                    ELSE 1
+                                END
+                            ) * sg.weight
+                        ELSE 0
+                    END) as grand_total_score
+                FROM scorecard_goals sg
+                JOIN scorecards s ON sg.scorecard_id = s.id
+                WHERE s.employee_id = ? 
+                AND s.evaluation_period = ?";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$employeeId, $evaluationPeriod]);
+        return $stmt->fetch();
+    }
+    }
 ?>

@@ -200,6 +200,7 @@
             if (employeeId) {
                 loadEmployeeData(employeeId);
                 loadExistingGoals(employeeId);
+                updateTotals();
             } else {
                 clearForm();
             }
@@ -280,6 +281,7 @@
                         
                         setTimeout(function() {
                             initSavedGoals();
+                            updateTotals();
                         }, 100);
                         
                     } else {
@@ -295,6 +297,7 @@
         }
 
         // Add goal row to existing KRA
+
         function addGoalToKRA(kraId) {
             console.log('Adding goal to KRA:', kraId);
             
@@ -314,22 +317,38 @@
             const $newRow = $('#goalRowTemplate').contents().clone();
             $newRow.attr('data-kra-id', kraId); // Set the KRA ID automatically
             
-            // Find the correct position to insert (after the last row of this KRA)
+            // FIXED: Find the correct insertion point
             const $kraRows = $('#scorecardTable tbody tr[data-kra-id="' + kraId + '"]');
             
             if ($kraRows.length > 0) {
-                // Insert after the last row of this specific KRA
-                const $lastRow = $kraRows.last();
-                $lastRow.after($newRow);
+                // Find the last row of this specific KRA by checking actual DOM position
+                let $insertAfter = null;
+                let maxIndex = -1;
+                
+                $kraRows.each(function() {
+                    const currentIndex = $(this).index();
+                    if (currentIndex > maxIndex) {
+                        maxIndex = currentIndex;
+                        $insertAfter = $(this);
+                    }
+                });
+                
+                if ($insertAfter) {
+                    // Insert immediately after the last row of this KRA
+                    $insertAfter.after($newRow);
+                } else {
+                    // Fallback: append to end
+                    $('#scorecardTable tbody').append($newRow);
+                }
             } else {
-                // If no existing rows for this KRA, append to end
+                // If no existing rows for this KRA, this shouldn't happen but handle gracefully
                 $('#scorecardTable tbody').append($newRow);
             }
             
             // Initialize the new row
             initNewRow($newRow);
             
-            console.log('New goal row added to KRA:', kraId);
+            console.log('New goal row added to KRA:', kraId, 'Total goals for this KRA:', goalsByKRA[kraId]);
         }
 
         // Initialize new row
@@ -369,6 +388,7 @@
                         }
                         
                         $row.remove();
+                        updateTotals();
                         
                         Swal.fire({
                             icon: 'success',
@@ -416,6 +436,7 @@
             $row.find('input[name="oct"]').val(goal.oct_value || '');
             $row.find('input[name="nov"]').val(goal.nov_value || '');
             $row.find('input[name="dec"]').val(goal.dec_value || '');
+            $row.find('.rating-input').val(goal.rating || '');
             $row.find('.evidence-input').val(goal.evidence || '');
         }
             
@@ -424,12 +445,19 @@
             $('#job_title, #department, #reviewer, #reviewer_designation').val('');
             $('#scorecardTable tbody').empty();
             goalsByKRA = {};
+            $('#weightTotal').text('0.0%');
+            $('#scoreTotal').text('#DIV/0!');
             addInitialRow();
         }
         
         // Add initial empty row
         function addInitialRow() {
             const $row = $('#kraRowTemplate').contents().clone();
+            
+            // Initialize KRA cell properly
+            const $kraCell = $row.find('.kra-cell');
+            $kraCell.attr('rowspan', 1);
+            
             $('#scorecardTable tbody').append($row);
             initSavedGoals();
         }
@@ -481,11 +509,25 @@
         }
 
         function saveGoalData($row) {
-            let isKraRow = $row.hasClass('kra-row');
+            let isKraRow = $row.hasClass('kra-row') || $row.find('.kra-select').length > 0;
             let kraId;
             
             if (isKraRow) {
                 kraId = $row.find('.kra-select').val();
+                
+                // Set KRA cell attributes for new KRA row
+                const $kraCell = $row.find('.kra-cell');
+                if ($kraCell.length > 0) {
+                    $kraCell.attr('data-kra-id', kraId);
+                    // Initialize or update goal count
+                    if (!goalsByKRA[kraId]) {
+                        goalsByKRA[kraId] = 1;
+                    }
+                    $kraCell.attr('rowspan', goalsByKRA[kraId]);
+                }
+                
+                // Set row's KRA ID
+                $row.attr('data-kra-id', kraId);
             } else {
                 kraId = $row.data('kra-id');
             }
@@ -532,6 +574,7 @@
                 oct: $row.find('input[name="oct"]').val(),
                 nov: $row.find('input[name="nov"]').val(),
                 dec: $row.find('input[name="dec"]').val(),
+                rating: $row.find('.rating-input').val(),
                 evidence: $row.find('.evidence-input').val()
             };
             
@@ -555,6 +598,9 @@
                         $row.find('.edit-goal-btn').show();
                         $row.find('.update-goal-btn').hide();
                         $row.find('.remove-goal-btn').show();
+                        
+                        // Update totals after saving
+                        updateTotals();
                         
                         Swal.fire({
                             icon: 'success',
@@ -602,6 +648,7 @@
                 oct: $row.find('input[name="oct"]').val(),
                 nov: $row.find('input[name="nov"]').val(),
                 dec: $row.find('input[name="dec"]').val(),
+                rating: $row.find('.rating-input').val(),
                 evidence: $row.find('.evidence-input').val()
             };
             
@@ -622,6 +669,9 @@
                         $row.find('.edit-goal-btn').show();
                         $row.find('.update-goal-btn').hide();
                         $row.find('.remove-goal-btn').show();
+                        
+                        // Update totals after updating
+                        updateTotals();
                         
                         Swal.fire({
                             icon: 'success',
@@ -671,6 +721,107 @@
                     $row.find('.remove-goal-btn').show();
                     console.log('Set as unsaved goal');
                 }
+            });
+        }
+
+        // NEW FUNCTION: Update totals calculation
+        function updateTotals() {
+            const employeeId = $('#employee_select').val();
+            if (!employeeId) {
+                $('#weightTotal').text('0.0%');
+                $('#scoreTotal').text('#DIV/0!');
+                return;
+            }
+            
+            $.ajax({
+                url: '/scorecard/getTotalCalculations',
+                type: 'POST',
+                data: { 
+                    employee_id: employeeId,
+                    evaluation_period: $('#evaluation_period').val() || '2025'
+                },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.status === 'success') {
+                        const totalWeight = parseFloat(res.data.grand_total_weight) || 0;
+                        const totalScore = parseFloat(res.data.grand_total_score) || 0;
+                        
+                        // Update the footer totals
+                        $('#weightTotal').text(totalWeight.toFixed(1) + '%');
+                        
+                        if (totalWeight > 0) {
+                            const percentage = ((totalScore / totalWeight) * 100);
+                            $('#scoreTotal').text(percentage.toFixed(1) + '%');
+                        } else {
+                            $('#scoreTotal').text('#DIV/0!');
+                        }
+                    } else {
+                        $('#scoreTotal').text('Error');
+                    }
+                },
+                error: function() {
+                    console.error('Failed to load total calculations');
+                    $('#scoreTotal').text('Error');
+                }
+            });
+        }
+
+        function loadCalculations(perspective = 'financial') {
+            const employeeId = $('#employee_select').val();
+            if (!employeeId) return;
+            
+            $.ajax({
+                url: '/scorecard/getCalculations',
+                type: 'POST',
+                data: { 
+                    employee_id: employeeId,
+                    evaluation_period: $('#evaluation_period').val() || '2025',
+                    perspective: perspective
+                },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.status === 'success') {
+                        updateCalculationDisplay(res.data, perspective);
+                    }
+                },
+                error: function() {
+                    console.error('Failed to load calculations');
+                }
+            });
+        }
+        
+        function updateCalculationDisplay(data, perspective) {
+            const totalWeight = parseFloat(data.total_weight) || 0;
+            const totalScore = parseFloat(data.total_score) || 0;
+            
+            // Display total weight - equivalent to =SUM(E69:E71)
+            $(`.total-weight-${perspective}`).text(totalWeight.toFixed(1) + '%');
+            
+            // Display total score - equivalent to =SUM(V69:V71)
+            $(`.total-score-${perspective}`).text(totalScore.toFixed(2));
+            
+            // Calculate percentage if weight > 0
+            const percentage = totalWeight > 0 ? ((totalScore / totalWeight) * 100) : 0;
+            $(`.percentage-${perspective}`).text(percentage.toFixed(1) + '%');
+        }
+
+        function calculateGoalScore(rating, period, weight) {
+            if (!rating || !weight) return 0;
+            
+            let divisor = 1; // Annual
+            switch(period) {
+                case 'Semi Annual': divisor = 2; break;
+                case 'Quarterly': divisor = 4; break;
+                case 'Monthly': divisor = 12; break;
+            }
+            
+            return (parseFloat(rating) / divisor) * parseFloat(weight);
+        }
+
+        function refreshCalculations() {
+            const perspectives = ['financial', 'customer', 'internal', 'learning'];
+            perspectives.forEach(perspective => {
+                loadCalculations(perspective);
             });
         }
 
@@ -787,6 +938,28 @@
                     updateGoalData($row);
                 }
             });
+        });
+
+        // Event handlers for perspective changes
+        $(document).on('change', '.perspective-select', function() {
+            const perspective = $(this).val();
+            loadCalculations(perspective);
+        });
+
+        // Auto-calculate on rating/weight changes
+        $(document).on('input', '.rating-input, .weight-input, .period-select', function() {
+            const $row = $(this).closest('tr');
+            const rating = $row.find('.rating-input').val();
+            const period = $row.find('.period-select').val();
+            const weight = $row.find('.weight-input').val();
+            
+            if (rating && weight && period) {
+                const score = calculateGoalScore(rating, period, weight);
+                $row.find('.calculated-score').text(score.toFixed(2));
+            }
+            
+            // Update totals when values change
+            setTimeout(updateTotals, 300);
         });
 
         // Initialize on page load

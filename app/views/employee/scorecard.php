@@ -62,44 +62,50 @@
                                 
                                 <!-- BSC Table -->
                                 <tr>
-                                    <td rowspan="7" class="table-header">BSC DIMENSION GOALS</td>
-                                    <td class="table-header">JOB CLASSIFICATION</td>
-                                    <td class="table-header">Supervisory / Support</td>
-                                    <td class="table-header">Managerial and Up</td>
+                                    <td class="dimension-header">BSC DIMENSION GOALS</td>
+                                    <td colspan="3" class="job-classification-header">JOB CLASSIFICATION</td>
                                 </tr>
                                 <tr>
-                                    <td class="table-header">Rank-and-File</td>
-                                    <td class="center-text">10%</td>
-                                    <td class="center-text">15%</td>
+                                    <td class="dimension-cell">FINANCIAL</td>
+                                    <td class="classification-subheader">Rank-and-File</td>
+                                    <td class="classification-subheader">Supervisory /<br>Specialist</td>
+                                    <td class="classification-subheader">Managerial and Up</td>
                                 </tr>
                                 <tr>
-                                    <td>FINANCIAL</td>
-                                    <td class="center-text">5%</td>
-                                    <td class="center-text">25%</td>
+                                    <td class="dimension-cell">STRATEGIC</td>
+                                    <td class="percentage-cell">5%</td>
+                                    <td class="percentage-cell">10%</td>
+                                    <td class="percentage-cell">20%</td>
                                 </tr>
                                 <tr>
-                                    <td>STRATEGIC</td>
-                                    <td class="center-text">10%</td>
-                                    <td class="center-text">30%</td>
+                                    <td class="dimension-cell">OPERATIONAL</td>
+                                    <td class="percentage-cell">5%</td>
+                                    <td class="percentage-cell">10%</td>
+                                    <td class="percentage-cell">10%</td>
                                 </tr>
                                 <tr>
-                                    <td>OPERATIONAL</td>
-                                    <td class="center-text">70%</td>
-                                    <td class="center-text">25%</td>
+                                    <td class="dimension-cell">LEARNING & GROWTH</td>
+                                    <td class="percentage-cell">70%</td>
+                                    <td class="percentage-cell">70%</td>
+                                    <td class="percentage-cell">60%</td>
                                 </tr>
                                 <tr>
-                                    <td>LEARNING & GROWTH</td>
-                                    <td class="center-text">10%</td>
-                                    <td class="center-text">5%</td>
+                                    <td class="dimension-cell behavioral-row">BEHAVIORAL</td>
+                                    <td class="percentage-cell">10%</td>
+                                    <td class="percentage-cell">5%</td>
+                                    <td class="percentage-cell">5%</td>
                                 </tr>
                                 <tr>
-                                    <td class="total-row">BEHAVIORAL</td>
-                                    <td class="total-row colored-cell center-text">5%</td>
-                                    <td class="total-row colored-cell center-text">5%</td>
+                                    <td class="dimension-cell behavioral-row">TOTAL</td>
+                                    <td class="percentage-cell behavioral-row">10%</td>
+                                    <td class="percentage-cell behavioral-row">5%</td>
+                                    <td class="percentage-cell behavioral-row">5%</td>
                                 </tr>
                                 <tr>
                                     <td class="total-row">TOTAL</td>
-                                    <td colspan="3" class="total-row colored-cell center-text">100%</td>
+                                    <td class="total-row percentage-cell">100%</td>
+                                    <td class="total-row percentage-cell">100%</td>
+                                    <td class="total-row percentage-cell">100%</td>
                                 </tr>
                                 
                                 <!-- Instructions -->

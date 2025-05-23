@@ -299,4 +299,60 @@ class ScoreCardController extends Controller {
         }
         exit;
     }
+
+
+    public function getCalculations() {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        try {
+            $employeeId = $_POST['employee_id'] ?? null;
+            $evaluationPeriod = $_POST['evaluation_period'] ?? date('Y');
+            $perspective = $_POST['perspective'] ?? 'financial';
+            
+            if (!$employeeId) {
+                throw new Exception('Employee ID is required');
+            }
+            
+            $calculations = $this->scoreCardModel->getCalculationsForEmployee($employeeId, $evaluationPeriod, $perspective);
+            
+            echo json_encode([
+                'status' => 'success',
+                'data' => $calculations
+            ]);
+            
+        } catch (Exception $e) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ]);
+        }
     }
+    exit;
+    }
+
+    public function getTotalCalculations() {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        try {
+            $employeeId = $_POST['employee_id'] ?? null;
+            $evaluationPeriod = $_POST['evaluation_period'] ?? date('Y');
+            
+            if (!$employeeId) {
+                throw new Exception('Employee ID is required');
+            }
+            
+            $calculations = $this->scoreCardModel->getTotalCalculations($employeeId, $evaluationPeriod);
+            
+            echo json_encode([
+                'status' => 'success',
+                'data' => $calculations
+            ]);
+            
+        } catch (Exception $e) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+    exit;
+}
+}

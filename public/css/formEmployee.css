@@ -1,128 +1,155 @@
-
 body {
     font-family: 'Poppins', sans-serif;
 }
+
 .main-form {
     border: 1px solid #000;
     width: 100%;
     border-collapse: collapse;
-    font-size: 11px;
+    font-size: 12px;
 }
+
 .header-row {
     border-bottom: 1px solid #000;
 }
+
 .company-logo {
-    max-height: 60px;
-    margin-left: 15px;
+    max-height: 45px;
+    margin-left: 10px;
 }
+
 .main-title {
     font-weight: 600;
     text-align: center;
-    font-size: 18px;
+    font-size: 14px;
     margin-bottom: 0;
 }
+
 .subtitle {
     font-weight: 600;
     text-align: center;
-    font-size: 16px;
-    margin-top: 5px;
+    font-size: 12px;
+    margin-top: 3px;
 }
+
 table {
     width: 100%;
     border-collapse: collapse;
+    font-size: 12px;
 }
+
 th, td {
     border: 1px solid #000;
-    padding: 8px 12px;
+    padding: 4px 6px;
+    font-size: 12px;
 }
+
 .form-label {
     font-weight: 500;
     white-space: nowrap;
+    font-size: 12px;
 }
+
 .form-value {
     width: 100%;
     border: none;
     border-bottom: 1px solid #000;
     background: transparent;
-    font-size: 13px;
-    padding: 2px 0;
+    font-size: 12px;
+    padding: 1px 0;
 }
+
 select.form-value {
     border: 1px solid #000;
-    padding: 2px 4px;
+    padding: 1px 2px;
     width: 100%;
+    font-size: 12px;
 }
+
 .scorecard-title {
     background-color: #d9e2f3;
     font-weight: bold;
     text-align: center;
-    padding: 8px;
+    padding: 6px;
+    font-size: 10px;
 }
+
 .scorecard-text {
-    padding: 8px;
+    padding: 6px;
+    font-size: 9px;
 }
+
 .bold-text {
     font-weight: bold;
 }
+
 .scorecard-list {
-    margin: 5px 0 5px 25px;
+    margin: 3px 0 3px 15px;
     padding: 0;
 }
+
 .colored-cell {
     background-color: #ffff00;
 }
+
 .total-row {
     font-weight: bold;
 }
+
 .table-header {
     background-color: #d9e2f3;
     font-weight: bold;
     text-align: center;
+    font-size: 9px;
 }
+
 .center-text {
     text-align: center;
 }
+
 .rating-text {
-    margin-left: 40px;
+    margin-left: 25px;
 }
+
 .nav-buttons {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: 15px;
+    right: 15px;
     z-index: 1000;
     display: flex;
-    gap: 10px;
-    font-size: 12px;
+    gap: 8px;
+    font-size: 9px;
 }
 
 .nav-btn {
     background-color: #0056b3;
     color: white;
     border: none;
-    border-radius: 5px;
-    padding: 10px 15px;
+    border-radius: 4px;
+    padding: 6px 10px;
     font-weight: bold;
     cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
     transition: all 0.3s ease;
-    font-size: 12px;
+    font-size: 9px;
 }
 
 .nav-btn:hover {
     background-color: #003d7a;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
+
 .collapsible {
     background-color: #f1f1f1;
     color: #444;
     cursor: pointer;
-    padding: 18px;
+    padding: 12px;
     width: 100%;
     border: none;
     text-align: left;
     outline: none;
-    font-size: 16px;
+    font-size: 10px;
     font-weight: bold;
     border: 1px solid #ddd;
 }
@@ -132,7 +159,7 @@ select.form-value {
 }
 
 .content {
-    padding: 0 18px;
+    padding: 0 12px;
     display: none;
     overflow: hidden;
     background-color: white;
@@ -141,59 +168,82 @@ select.form-value {
     border-bottom: 1px solid #ddd;
 }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
+.table-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
 }
 
-table, th, td {
-    border: 1px solid #ddd;
-}
-
-th, td {
-    padding: 8px;
-    text-align: left;
-}
-
-.center-text {
-    text-align: center;
-}
-
-.table-header {
-    background-color: #f2f2f2;
+.dimension-header {
+    background: #4a90e2;
+    color: white;
     font-weight: bold;
+    text-align: center;
+    padding: 8px;
+    border: 1px solid #3a7bc8;
+    font-size: 9px;
+}
+
+.job-classification-header {
+    background: #6bb6ff;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    padding: 8px;
+    border: 1px solid #3a7bc8;
+    font-size: 9px;
+}
+
+.classification-subheader {
+    background: #87ceeb;
+    color: #333;
+    font-weight: bold;
+    text-align: center;
+    padding: 6px 4px;
+    border: 1px solid #6bb6ff;
+    font-size: 8px;
+    line-height: 1.1;
+}
+
+.dimension-cell {
+    background: white;
+    color: black;
+    font-weight: bold;
+    text-align: center;
+    padding: 6px 4px;
+    border: 1px solid black;
+    font-size: 8px;
+}
+
+.percentage-cell {
+    background: white;
+    color: #333;
+    text-align: center;
+    padding: 6px;
+    border: 1px solid #ddd;
+    font-weight: 500;
+    font-size: 9px;
+}
+
+.behavioral-row {
+    background: white !important;
+    color: black !important;
 }
 
 .total-row {
+    background: #ffd700 !important;
+    color: #333 !important;
     font-weight: bold;
 }
 
-.colored-cell {
-    background-color: #ffff99;
+tr:hover .percentage-cell:not(.total-row) {
+    background: #f8f9fa;
 }
 
-.scorecard-title {
-    font-weight: bold;
-    background-color: #f2f2f2;
-    padding: 10px;
-    font-size: 16px;
-}
 
-.scorecard-text {
-    padding: 10px;
-}
-
-.scorecard-list {
-    margin-left: 20px;
-}
-
-.bold-text {
-    font-weight: bold;
-}
-
-.rating-text {
-    margin-left: 20px;
-}
 /* financial */
 .kra-table table { 
     border-collapse: collapse; 
@@ -203,7 +253,7 @@ th, td {
     vertical-align: middle !important;
     border: 1px solid #767676 !important;
     padding: 4px !important;
-    font-size: 11px;
+    font-size: 10px;
   }
   .table-yellow {
     background-color: #FFEB3B;
@@ -216,7 +266,7 @@ th, td {
     padding: 2px !important;
   }
   .month-cell input {
-    font-size: 11px;
+    font-size: 10px;
     padding: 2px;
     text-align: center;
     border: none;
@@ -224,7 +274,7 @@ th, td {
   }
   .goal-input {
     min-width: 100x;
-    font-size: 11px;
+    font-size: 10px;
   }
   .action-btns {
     display: flex;
@@ -232,7 +282,7 @@ th, td {
     margin-bottom: 10px;
   }
   .action-btns .btn {
-    font-size: 11px;
+    font-size: 10px;
     padding: 2px 6px;
   }
   .table-responsive { 
@@ -281,4 +331,55 @@ th, td {
     -moz-appearance: none;
     appearance: none;
     background-image: none !important;
+}
+
+
+/* search with input */
+.employee-search-container {
+    position: relative;
+    width: 100%;
+}
+
+.employee-search-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: white;
+    cursor: pointer;
+}
+
+.employee-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+
+.employee-dropdown.show {
+    display: block;
+}
+
+.employee-option {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.employee-option:hover {
+    background-color: #f8f9fa;
+}
+
+.employee-option.selected {
+    background-color: #007bff;
+    color: white;
 }
