@@ -1,6 +1,6 @@
 <link rel="stylesheet" href="/public/css/formEmployee.css?v=<?php echo time(); ?>">
 
-<div class="container-fluid mt-3">
+<div class="container-fluid">
         <div class="table-responsive kra-table">
             <table class="table table-bordered table-sm" id="scorecardTable">
                 <thead>

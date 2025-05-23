@@ -276,3 +276,9 @@ th, td {
     margin-bottom: 0;
 }
   /* end of financial */
+  .form-select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: none !important;
+}
