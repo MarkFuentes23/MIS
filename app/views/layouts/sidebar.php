@@ -165,7 +165,7 @@
 
     <div class="sidebar-heading">User</div>
     <div class="nav-item">
-      <a href="/profile" class="nav-link">
+      <a href="/profile/view" class="nav-link">
         <i class="fas fa-fw fa-user"></i>
         <span>Profile</span>
       </a>
