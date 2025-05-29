@@ -62,7 +62,7 @@
 <template id="kraRowTemplateLearning">
      <tr data-kra-id="" class="kra-row">
             <td rowspan="1" class="align-middle kra-cell" data-kra-id="">
-             <select name="kra" class="form-select form-select-sm">
+             <select name="kra" class="form-select form-select-sm kra-select">
                     <option value="">Select KRA</option>
                     <?php if(isset($kras) && !empty($kras)): ?>
                         <?php foreach ($kras as $kra): ?>
@@ -112,6 +112,15 @@
                 <button type="button" class="btn btn-sm btn-danger remove-goal-btn" style="padding: 2px 5px; font-size: 8px;">
                     <i class="fas fa-minus"></i>
                 </button>
+                <button type="button" class="btn btn-sm btn-primary save-goal-btn" style="padding:2px 5px;font-size:8px;" title="Save Goal">
+                    Save
+                </button>
+                <button type="button" class="btn btn-sm btn-warning edit-goal-btn" style="padding:2px 5px;font-size:8px; display:none;" title="Edit Goal">
+                    Edit
+                </button>
+                <button type="button" class="btn btn-sm btn-success update-goal-btn" style="padding:2px 5px;font-size:8px; display:none;" title="Update Goal">
+                    Update
+                </button>
             </div>
         </td>
     </tr>
@@ -160,6 +169,15 @@
                 </button>
                 <button type="button" class="btn btn-sm btn-danger remove-goal-btn" style="padding: 2px 5px; font-size: 8px;">
                     <i class="fas fa-minus"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-primary save-goal-btn" style="padding:2px 5px;font-size:8px;" title="Save Goal">
+                    Save
+                </button>
+                <button type="button" class="btn btn-sm btn-warning edit-goal-btn" style="padding:2px 5px;font-size:8px; display:none;" title="Edit Goal">
+                    Edit
+                </button>
+                <button type="button" class="btn btn-sm btn-success update-goal-btn" style="padding:2px 5px;font-size:8px; display:none;" title="Update Goal">
+                    Update
                 </button>
             </div>
         </td>

@@ -66,46 +66,46 @@
                                     <td colspan="3" class="job-classification-header">JOB CLASSIFICATION</td>
                                 </tr>
                                 <tr>
-                                    <td class="dimension-cell">FINANCIAL</td>
+                                    <td class="dimension-cell">&nbsp;</td>
                                     <td class="classification-subheader">Rank-and-File</td>
                                     <td class="classification-subheader">Supervisory /<br>Specialist</td>
                                     <td class="classification-subheader">Managerial and Up</td>
                                 </tr>
                                 <tr>
+                                    <td class="dimension-cell">FINANCIAL</td>
+                                    <td class="percentage-cell" style="text-align: right;">10%</td>
+                                    <td class="percentage-cell" style="text-align: right;">5%</td>
+                                    <td class="percentage-cell" style="text-align: right;">5%</td>
+                                </tr>
+                                <tr>
                                     <td class="dimension-cell">STRATEGIC</td>
-                                    <td class="percentage-cell">5%</td>
-                                    <td class="percentage-cell">10%</td>
-                                    <td class="percentage-cell">20%</td>
+                                    <td class="percentage-cell" style="text-align: right;">5%</td>
+                                    <td class="percentage-cell" style="text-align: right;">10%</td>
+                                    <td class="percentage-cell" style="text-align: right;">20%</td>
                                 </tr>
                                 <tr>
                                     <td class="dimension-cell">OPERATIONAL</td>
-                                    <td class="percentage-cell">5%</td>
-                                    <td class="percentage-cell">10%</td>
-                                    <td class="percentage-cell">10%</td>
+                                    <td class="percentage-cell" style="text-align: right;">5%</td>
+                                    <td class="percentage-cell" style="text-align: right;">10%</td>
+                                    <td class="percentage-cell" style="text-align: right;">10%</td>
                                 </tr>
                                 <tr>
                                     <td class="dimension-cell">LEARNING & GROWTH</td>
-                                    <td class="percentage-cell">70%</td>
-                                    <td class="percentage-cell">70%</td>
-                                    <td class="percentage-cell">60%</td>
+                                    <td class="percentage-cell" style="text-align: right;">70%</td>
+                                    <td class="percentage-cell" style="text-align: right;">70%</td>
+                                    <td class="percentage-cell" style="text-align: right;">60%</td>
                                 </tr>
                                 <tr>
                                     <td class="dimension-cell behavioral-row">BEHAVIORAL</td>
-                                    <td class="percentage-cell">10%</td>
-                                    <td class="percentage-cell">5%</td>
-                                    <td class="percentage-cell">5%</td>
-                                </tr>
-                                <tr>
-                                    <td class="dimension-cell behavioral-row">TOTAL</td>
-                                    <td class="percentage-cell behavioral-row">10%</td>
-                                    <td class="percentage-cell behavioral-row">5%</td>
-                                    <td class="percentage-cell behavioral-row">5%</td>
+                                    <td class="percentage-cell" style="text-align: right;">10%</td>
+                                    <td class="percentage-cell" style="text-align: right;">5%</td>
+                                    <td class="percentage-cell" style="text-align: right;">5%</td>
                                 </tr>
                                 <tr>
                                     <td class="total-row">TOTAL</td>
-                                    <td class="total-row percentage-cell">100%</td>
-                                    <td class="total-row percentage-cell">100%</td>
-                                    <td class="total-row percentage-cell">100%</td>
+                                    <td class="total-row percentage-cell" style="text-align: right;">100%</td>
+                                    <td class="total-row percentage-cell" style="text-align: right;">100%</td>
+                                    <td class="total-row percentage-cell" style="text-align: right;">100%</td>
                                 </tr>
                                 
                                 <!-- Instructions -->

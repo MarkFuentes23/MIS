@@ -1,5 +1,5 @@
 <?php
-class ScoreCardModel extends Model {
+class ScoreCard2Model extends Model {
     
     // Get or create scorecard for an employee
     public function getOrCreateScorecard($employeeId, $evaluationPeriod, $positionTitle, $department, $reviewer, $reviewerDesignation, $jobClassification) {
@@ -324,9 +324,9 @@ class ScoreCardModel extends Model {
             // Delete the goal
             $deleteSql = "DELETE FROM scorecard_goals WHERE id = ?";
             $deleteStmt = $this->db->prepare($deleteSql);
-            $result = $deleteStmt->execute([$goalId]);
+            $deleteResult = $deleteStmt->execute([$goalId]);
             
-            if (!$result) {
+            if (!$deleteResult) {
                 throw new Exception('Failed to delete goal');
             }
             
@@ -428,7 +428,7 @@ class ScoreCardModel extends Model {
     }
     
     // Get all perspectives
-    public function getAllPerspectives() {
+    public function getAllCategories() {
         return ['financial', 'customer', 'internal', 'learning'];
     }
     
@@ -450,7 +450,7 @@ class ScoreCardModel extends Model {
     }
     
     // Get category performance
-    public function getPerspectivePerformance($scorecardId, $category) {
+    public function getCategoryPerformance($scorecardId, $category) {
         $sql = "SELECT 
                 SUM(score) as total_score, 
                 SUM(weight) as total_weight,
@@ -481,46 +481,45 @@ class ScoreCardModel extends Model {
     }
 
     public function getCalculationsForEmployee($employeeId, $evaluationPeriod, $category) {
-    $sql = "SELECT 
-                SUM(sg.weight) as total_weight,
-                SUM(CASE 
-                    WHEN sg.rating IS NOT NULL AND sg.weight IS NOT NULL THEN
-                        (sg.rating / 
-                            CASE sg.rating_period
-                                WHEN 'Annual' THEN 1
-                                WHEN 'Semi Annual' THEN 2
-                                WHEN 'Quarterly' THEN 4
-                                WHEN 'Monthly' THEN 12
-                                ELSE 1
-                            END
-                        ) * sg.weight
-                    ELSE 0
-                END) as total_score
-            FROM scorecard_goals sg
-            JOIN scorecards s ON sg.scorecard_id = s.id
-            WHERE s.employee_id = ? 
-            AND s.evaluation_period = ? 
-            AND sg.category = ?";
-    
-    $stmt = $this->db->prepare($sql);
-    $stmt->execute([$employeeId, $evaluationPeriod, $category]);
-    return $stmt->fetch();
+        $sql = "SELECT 
+                    SUM(sg.weight) as total_weight,
+                    SUM(CASE 
+                        WHEN sg.rating IS NOT NULL AND sg.weight IS NOT NULL THEN
+                            (sg.rating / 
+                                CASE sg.rating_period
+                                    WHEN 'Annual' THEN 1
+                                    WHEN 'Semi Annual' THEN 2
+                                    WHEN 'Quarterly' THEN 4
+                                    WHEN 'Monthly' THEN 12
+                                    ELSE 1
+                                END
+                            ) * sg.weight
+                        ELSE 0
+                    END) as total_score
+                FROM scorecard_goals sg
+                JOIN scorecards s ON sg.scorecard_id = s.id
+                WHERE s.employee_id = ? 
+                AND s.evaluation_period = ? 
+                AND sg.category = ?";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$employeeId, $evaluationPeriod, $category]);
+        return $stmt->fetch();
     }
 
-// Get all calculations by category for an employee
-    public function getAllCalculationsByPerspective($employeeId, $evaluationPeriod) {
-        $perspectives = ['financial', 'customer', 'internal', 'learning'];
+    // Get all calculations by category for an employee
+    public function getAllCalculationsByCategory($employeeId, $evaluationPeriod) {
+        $categories = ['financial', 'customer', 'internal', 'learning'];
         $results = [];
         
-        foreach ($perspectives as $category) {
+        foreach ($categories as $category) {
             $results[$category] = $this->getCalculationsForEmployee($employeeId, $evaluationPeriod, $category);
         }
         
         return $results;
     }
 
-
-// Get total calculations for all perspectives
+    // Get total calculations for all perspectives
     public function getTotalCalculations($employeeId, $evaluationPeriod) {
         $sql = "SELECT 
                     SUM(sg.weight) as grand_total_weight,
@@ -547,14 +546,34 @@ class ScoreCardModel extends Model {
         return $stmt->fetch();
     }
 
-    function canAddGoal($scorecardId, $pdo) {
-        $stmt = $pdo->prepare("SELECT COALESCE(SUM(weight), 0.00) FROM scorecard_goals WHERE scorecard_id = ?");
-        $stmt->execute([$scorecardId]);
-        return $stmt->fetchColumn() < 10.00;
+    // Get weight limits by job classification
+    private function getWeightLimitsByClassification($jobClassification) {
+        $limits = [
+            'Rank-and-File' => [
+                'financial' => 5,
+                'strategic' => 5,
+                'operational' => 70,
+                'learning' => 5
+            ],
+            'Supervisory/Specialist' => [
+                'financial' => 10,
+                'strategic' => 10,
+                'operational' => 70,
+                'learning' => 5
+            ],
+            'Managerial and Up' => [
+                'financial' => 20,
+                'strategic' => 10,
+                'operational' => 60,
+                'learning' => 5
+            ]
+        ];
+        
+        return $limits[$jobClassification] ?? $limits['Rank-and-File']; // Default to Rank-and-File if classification not found
     }
 
     // Get weights by category for an employee
-    public function getWeightsByPerspective($employeeId, $evaluationPeriod) {
+    public function getWeightsByCategory($employeeId, $evaluationPeriod) {
         $sql = "SELECT 
                 COALESCE(SUM(CASE WHEN category = 'financial' THEN weight ELSE 0 END), 0) as financial,
                 COALESCE(SUM(CASE WHEN category = 'strategic' THEN weight ELSE 0 END), 0) as strategic,
@@ -576,5 +595,34 @@ class ScoreCardModel extends Model {
             'learning' => floatval($result['learning'] ?? 0)
         );
     }
-}
 
+    // Alias for getWeightsByCategory to maintain consistency with the new naming
+    public function getWeightsByPerspective($employeeId, $evaluationPeriod) {
+        return $this->getWeightsByCategory($employeeId, $evaluationPeriod);
+    }
+
+    // Check if a category has reached its weight limit
+    public function checkCategoryWeightLimit($employeeId, $evaluationPeriod, $category) {
+        // Get the scorecard to determine job classification
+        $scorecard = $this->getScorecardByEmployee($employeeId, $evaluationPeriod);
+        if (!$scorecard) {
+            return false;
+        }
+
+        // Get weight limits for the job classification
+        $limits = $this->getWeightLimitsByClassification($scorecard['job_classification']);
+        
+        // Get current total weight for the category
+        $weights = $this->getWeightsByCategory($employeeId, $evaluationPeriod);
+        
+        // Compare current weight with limit
+        $currentWeight = $weights[$category] ?? 0;
+        $weightLimit = $limits[$category] ?? 0;
+        
+        return [
+            'current_weight' => $currentWeight,
+            'weight_limit' => $weightLimit,
+            'is_limit_reached' => $currentWeight >= $weightLimit
+        ];
+    }
+}
