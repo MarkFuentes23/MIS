@@ -5,24 +5,36 @@ $(document).ready(function() {
     // Define BSC percentages by job classification
     const bscPercentages = {
         'Rank-and-File': {
-            'Financial': 5,
+            'Financial': 10,
             'Strategic': 5,
-            'Operational': 70,
-            'Learning': 10
+            'Operational': 5,
+            'Learning': 70
         },
         'Supervisory/Specialist': {
-            'Financial': 10,
+            'Financial': 5,
             'Strategic': 10,
-            'Operational': 70,
-            'Learning': 5
+            'Operational': 10,
+            'Learning': 70
         },
         'Managerial and Up': {
-            'Financial': 20,
-            'Strategic': 10,
-            'Operational': 60,
-            'Learning': 5
+            'Financial': 5,
+            'Strategic': 20,
+            'Operational': 10,
+            'Learning': 60
         }
     };
+
+    // Update Learning weight display based on job classification
+    function updateLearningWeight() {
+        const jobClass = $('#job_classification').val();
+        if (jobClass && bscPercentages[jobClass]) {
+            $('.learning-weight').text(bscPercentages[jobClass]['Learning'] + '%');
+        }
+    }
+
+    // Call this when job classification changes
+    $('#job_classification').change(updateLearningWeight);
+
     
     // Function to update header percentages
     function updateHeaderPercentages(classification) {
@@ -55,7 +67,67 @@ $(document).ready(function() {
     $('#job_classification').on('change', function() {
         const classification = $(this).val();
         updateHeaderPercentages(classification);
-    }).trigger('change'); // Trigger change event to set initial percentages
+        updateLearningWeight();
+
+        
+        // Check if scorecard exists (has been saved before)
+        if ($(this).data('saved')) {
+            $(this).prop('disabled', true);
+        }
+        
+        // Update weight limits for all categories
+        setTimeout(() => {
+            checkWeightLimit();
+            validateWeightsByClassification(classification);
+        }, 100);
+    }).trigger('change');
+    
+    // Validate weights against classification limits
+    function validateWeightsByClassification(classification) {
+        const limits = bscPercentages[classification] || bscPercentages['Rank-and-File'];
+        
+        Object.entries(limits).forEach(([category, limit]) => {
+            const selector = getCategorySelectorByName(category.toLowerCase());
+            const currentTotal = calculateCategoryTotal(selector);
+            
+            $(`${selector} .weight-input`).each(function() {
+                const $input = $(this);
+                const currentValue = parseFloat($input.val()) || 0;
+                const otherWeights = currentTotal - currentValue;
+                
+                if (otherWeights >= limit) {
+                    $input.prop('disabled', true)
+                         .attr('title', `Weight limit reached for ${category} (${limit}%)`);
+                } else {
+                    const remaining = limit - otherWeights;
+                    $input.prop('disabled', false)
+                         .attr('title', `Maximum allowed: ${remaining.toFixed(1)}%`);
+                }
+            });
+        });
+    }
+    
+    // Helper function to get selector by category name
+    function getCategorySelectorByName(category) {
+        switch(category) {
+            case 'financial': return '#scorecardTable';
+            case 'strategic': return '#goalBodyStrategic';
+            case 'operational': return '#goalBodyOperational';
+            case 'learning': return '#goalBodyLearning';
+            default: return '#scorecardTable';
+        }
+    }
+    
+    // Calculate total weight for a category
+    function calculateCategoryTotal(selector) {
+        let total = 0;
+        $(`${selector} .weight-input`).each(function() {
+            total += parseFloat($(this).val()) || 0;
+        });
+        return total;
+    }
+
+
     
         
         // Initialize Select2 for employee search
@@ -232,58 +304,74 @@ $(document).ready(function() {
         }
         
     // Check weight limits for each category
-    function checkWeightLimit() {
-        const employeeId = $employeeSearch.val();
-        if (!employeeId) return;
-        
-        const evaluationPeriod = $('#evaluation_period').val() || '2025';
-        const categories = ['financial', 'strategic', 'operational', 'learning'];
-        
-        categories.forEach(category => {
-            ajaxRequest('/scorecard2/checkCategoryLimit', {
-                employee_id: employeeId,
-                evaluation_period: evaluationPeriod,
-                category: category
-            }, function(res) {
-                if (res.status === 'success') {
-                    const limitInfo = res.data;
-                    let selector;
-                    
-                    // Determine the correct selector based on category
-                    switch(category) {
-                        case 'financial':
-                            selector = '#scorecardTable';
-                            break;
-                        case 'strategic':
-                            selector = '#goalBodyStrategic';
-                            break;
-                        case 'operational':
-                            selector = '#goalBodyOperational';
-                            break;
-                        case 'learning':
-                            selector = '#goalBodyLearning';
-                            break;
+        function checkWeightLimit() {
+            const employeeId = $employeeSearch.val();
+            if (!employeeId) return;
+            
+            const evaluationPeriod = $('#evaluation_period').val() || '2025';
+            const jobClassification = $('#job_classification').val() || 'Rank-and-File';
+            const categories = ['financial', 'strategic', 'operational', 'learning'];
+            
+            // Get weight limits based on job classification
+            const weightLimits = bscPercentages[jobClassification] || bscPercentages['Rank-and-File'];
+            
+            categories.forEach(category => {
+                ajaxRequest('/scorecard2/checkCategoryLimit', {
+                    employee_id: employeeId,
+                    evaluation_period: evaluationPeriod,
+                    category: category
+                }, function(res) {
+                    if (res.status === 'success') {
+                        const limitInfo = res.data;
+                        let selector;
+                        let categoryKey;
+                        
+                        // Determine the correct selector and category key based on category
+                        switch(category) {
+                            case 'financial':
+                                selector = '#scorecardTable';
+                                categoryKey = 'Financial';
+                                break;
+                            case 'strategic':
+                                selector = '#goalBodyStrategic';
+                                categoryKey = 'Strategic';
+                                break;
+                            case 'operational':
+                                selector = '#goalBodyOperational';
+                                categoryKey = 'Operational';
+                                break;
+                            case 'learning':
+                                selector = '#goalBodyLearning';
+                                categoryKey = 'Learning';
+                                break;
+                        }
+                        
+                        const $addBtn = $(`${selector} .add-goal-btn`);
+                        const dynamicWeightLimit = weightLimits[categoryKey];
+                        
+        // Check if limit is reached based on job classification
+        if (limitInfo.current_weight >= dynamicWeightLimit) {
+            $addBtn
+                .prop('disabled', true)
+                .attr('title', `Weight limit reached (${dynamicWeightLimit}% for ${jobClassification})`)
+                .removeClass('btn-success')
+                .addClass('btn-secondary');
+            // Also disable weight inputs for this category
+            $(`${selector} .weight-input`).prop('disabled', true);
+        } else {
+            $addBtn
+                .prop('disabled', false)
+                .attr('title', `Add new goal (${limitInfo.current_weight}%/${dynamicWeightLimit}% used)`)
+                .removeClass('btn-secondary')
+                .addClass('btn-success');
+            // Enable weight inputs if below limit
+            $(`${selector} .weight-input`).prop('disabled', false);
+        }
+
                     }
-                    
-                    const $addBtn = $(`${selector} .add-goal-btn`);
-                    
-                    if (limitInfo.is_limit_reached) {
-                        $addBtn
-                            .prop('disabled', true)
-                            .attr('title', `Weight limit reached (${limitInfo.weight_limit}%)`)
-                            .removeClass('btn-success')
-                            .addClass('btn-secondary');
-                    } else {
-                        $addBtn
-                            .prop('disabled', false)
-                            .attr('title', 'Add new goal')
-                            .removeClass('btn-secondary')
-                            .addClass('btn-success');
-                    }
-                }
+                });
             });
-        });
-    }
+        }
         
         
         // Load employee data
@@ -308,13 +396,18 @@ $(document).ready(function() {
                         if (res.data.scorecard) {
                             $('#reviewer').val(res.data.scorecard.reviewer || '');
                             $('#reviewer_designation').val(res.data.scorecard.reviewer_designation || '');
-                            $('#job_classification').val(res.data.scorecard.job_classification || '');
+                            $('#job_classification')
+                                .val(res.data.scorecard.job_classification || '')
+                                .prop('disabled', true);
                         } else {
                             // Fallback to employee data if no scorecard exists yet
                             $('#reviewer').val(res.data.reviewer || '');
                             $('#reviewer_designation').val(res.data.reviewer_designation || '');
-                            $('#job_classification').val('');
+                            $('#job_classification')
+                                .val('')
+                                .prop('disabled', false);
                         }
+
                     } else {
                         $('#job_title, #department, #reviewer, #reviewer_designation, #job_classification').val('');
                     }
@@ -324,6 +417,7 @@ $(document).ready(function() {
         }
         
         // Load existing goals for Financial and Learning sections
+
         function loadExistingGoals(id) {
             if (!id) return;
             
@@ -374,7 +468,11 @@ $(document).ready(function() {
                                 });
                             });
                         } else {
-                            addInitialRow();
+                            // Add initial Financial row if no goals exist
+                            const $financialRow = $('#kraRowTemplate').contents().clone();
+                            $financialRow.find('.kra-cell').attr('rowspan', 1);
+                            $financialRow.find('.score-value').text('#DIV/0!').addClass('bg-danger');
+                            $('#scorecardTable tbody').append($financialRow);
                         }
                         
                         // Populate Learning section
@@ -398,6 +496,15 @@ $(document).ready(function() {
                                     $row.find('.edit-goal-btn, .remove-goal-btn').show();
                                 });
                             });
+                        } else {
+                            // Add initial Learning row if no goals exist
+                            const $learningRow = $('#kraRowTemplateLearning').contents().clone();
+                            $learningRow.find('.kra-cell').attr('rowspan', 1);
+                            $learningRow.find('.score-value').text('#DIV/0!').addClass('bg-danger');
+                            $('#goalBodyLearning').append($learningRow);
+                            $learningRow.find('input, select').prop('disabled', false);
+                            $learningRow.find('.save-goal-btn').show();
+                            $learningRow.find('.edit-goal-btn, .update-goal-btn, .remove-goal-btn').hide();
                         }
                         
                         setTimeout(() => {
@@ -406,25 +513,38 @@ $(document).ready(function() {
                             checkWeightLimit();
                         }, 100);
                     } else {
+                        // No goals found - add initial rows for both sections
                         addInitialRow();
                     }
                 },
-                error: addInitialRow
+                error: function() {
+                    // Error occurred - add initial rows for both sections
+                    addInitialRow();
+                }
             });
         }
-        
+                
         // Add goal to KRA
-        function addGoalToKRA(kraId) {
-            goalsByKRA[kraId] = (goalsByKRA[kraId] || 0) + 1;
-            
-            const $kraCell = $(`td.kra-cell[data-kra-id="${kraId}"]`);
-            if ($kraCell.length) $kraCell.attr('rowspan', goalsByKRA[kraId]);
-            
-            const $newRow = $('#goalRowTemplate').contents().clone().attr('data-kra-id', kraId);
-            const $kraRows = $(`tr[data-kra-id="${kraId}"]`);
-            const $lastRow = $kraRows.last();
-            
-            $lastRow.length ? $lastRow.after($newRow) : $('#scorecardTable tbody').append($newRow);
+function addGoalToKRA(kraId) {
+    goalsByKRA[kraId] = (goalsByKRA[kraId] || 0) + 1;
+    
+    const $kraCell = $(`td.kra-cell[data-kra-id="${kraId}"]`);
+    if ($kraCell.length) $kraCell.attr('rowspan', goalsByKRA[kraId]);
+    
+    // Determine if we're in Learning section
+    const isLearningSection = $kraCell.closest('#goalBodyLearning').length > 0;
+    const templateId = isLearningSection ? '#goalRowTemplateLearning' : '#goalRowTemplate';
+    const $newRow = $(templateId).contents().clone().attr('data-kra-id', kraId);
+
+    const $kraRows = $(`tr[data-kra-id="${kraId}"]`);
+    const $lastRow = $kraRows.last();
+    
+    if (isLearningSection) {
+        $lastRow.length ? $lastRow.after($newRow) : $('#goalBodyLearning').append($newRow);
+    } else {
+        $lastRow.length ? $lastRow.after($newRow) : $('#scorecardTable tbody').append($newRow);
+    }
+
             initNewRow($newRow);
         }
         
@@ -466,6 +586,22 @@ $(document).ready(function() {
                         $row.remove();
                         updateTotals();
                         checkWeightLimit();
+
+                        // If Learning section is empty after removal, add initial row
+                        if ($('#goalBodyLearning tr').length === 0) {
+                            console.log('Learning section empty after removal, adding initial row');
+                            const $learningRow = $('#goalRowTemplateLearning').contents().clone();
+                            $learningRow.find('.kra-cell').attr('rowspan', 1);
+                            $learningRow.find('.score-value').text('#DIV/0!').addClass('bg-danger');
+                            $('#goalBodyLearning').append($learningRow);
+                            $learningRow.find('input, select').prop('disabled', false);
+                            $learningRow.find('.save-goal-btn').show();
+                            $learningRow.find('.edit-goal-btn, .update-goal-btn, .remove-goal-btn').hide();
+                            initSavedGoals();
+                            updateTotals();
+                            checkWeightLimit();
+                        }
+
                         Swal.fire({ icon: 'success', title: 'Removed!', timer: 1500, showConfirmButton: false });
                     }
                 }
@@ -503,7 +639,7 @@ $(document).ready(function() {
             addInitialRow();
         }
         
-        // Add initial row
+// Add initial row
         function addInitialRow() {
             // Add initial row for Financial section
             const $financialRow = $('#kraRowTemplate').contents().clone();
@@ -517,7 +653,12 @@ $(document).ready(function() {
             $learningRow.find('.score-value').text('#DIV/0!').addClass('bg-danger');
             $('#goalBodyLearning').append($learningRow);
 
-            // Initialize both sections
+            // Enable inputs and show save button for new Learning row
+            $learningRow.find('input, select').prop('disabled', false);
+            $learningRow.find('.save-goal-btn').show();
+            $learningRow.find('.edit-goal-btn, .update-goal-btn, .remove-goal-btn').hide();
+
+            // Initialize Financial section rows
             initSavedGoals();
         }
         
@@ -561,7 +702,7 @@ $(document).ready(function() {
         }
         
         // Save goal
-    function saveGoalData($row) {
+        function saveGoalData($row) {
         const isKraRow = $row.hasClass('kra-row') || $row.find('.kra-select').length > 0;
         const isLearningSection = $row.closest('#goalBodyLearning').length > 0;
         const isStrategicSection = $row.closest('#goalBodyStrategic').length > 0;
@@ -641,8 +782,25 @@ $(document).ready(function() {
                     $row.attr('data-goal-id', res.goal_id);
                     setSavedState($row);
                     updateTotals();
+                    
+                    // Lock job classification and validate weights
+                    const classification = $('#job_classification').val();
+                    $('#job_classification')
+                        .data('saved', true)
+                        .prop('disabled', true);
+                    
+                    validateWeightsByClassification(classification);
                     checkWeightLimit();
-                    Swal.fire({ icon: 'success', title: 'Success!', text: 'Goal saved successfully.', timer: 1500, showConfirmButton: false });
+                    
+                    Swal.fire({ 
+                        icon: 'success', 
+                        title: 'Success!', 
+                        text: 'Goal saved successfully.', 
+                        timer: 1500, 
+                        showConfirmButton: false 
+                    });
+
+
                 } else {
                     Swal.fire('Error', res.message || 'Error saving goal', 'error');
                 }
@@ -707,7 +865,7 @@ $(document).ready(function() {
             $row.find('.edit-goal-btn, .remove-goal-btn').show();
         }
         
-        // Initialize saved goals
+// Initialize saved goals
         function initSavedGoals() {
             // Initialize Financial section
             $('#scorecardTable tbody tr').each(function() {
@@ -734,10 +892,10 @@ $(document).ready(function() {
                     $row.find('.save-goal-btn, .update-goal-btn').hide();
                     $row.find('.edit-goal-btn, .remove-goal-btn').show();
                 } else {
-                    // For new goals, disable inputs until edit is clicked
-                    $row.find('input, select').prop('disabled', true);
-                    $row.find('.save-goal-btn, .update-goal-btn').hide();
-                    $row.find('.edit-goal-btn, .remove-goal-btn').show();
+                    // For new goals, enable inputs and show save button, hide edit and update buttons
+                    $row.find('input, select').prop('disabled', false);
+                    $row.find('.save-goal-btn').show();
+                    $row.find('.edit-goal-btn, .update-goal-btn, .remove-goal-btn').hide();
                 }
             });
         }
@@ -865,14 +1023,21 @@ $(document).ready(function() {
     
     $(document).on('input', '.weight-input', function() {
         const $row = $(this).closest('tr');
-        const currentWeight = parseFloat($(this).val()) || 0;
+        let currentWeight = parseFloat($(this).val()) || 0;
         const employeeId = $employeeSearch.val();
-        
+        const $input = $(this);
+
         if (!employeeId) return;
-        
-        // Check if current weight exceeds 10%
+
+        // Validate weight input
+        if (isNaN(currentWeight)) {
+            $input.val('0.00');
+            return;
+        }
+
+        // Enforce 10% individual goal limit
         if (currentWeight > 10) {
-            $(this).val('10.00');
+            $input.val('10.00');
             Swal.fire({
                 icon: 'warning',
                 title: 'Weight Limit Exceeded',
@@ -880,52 +1045,65 @@ $(document).ready(function() {
                 timer: 2000,
                 showConfirmButton: false
             });
-            currentWeight = 10;
+            return;
         }
+
         
-        // Get weights by perspective
+        // Get job classification and corresponding limits
+        const jobClassification = $('#job_classification').val() || 'Rank-and-File';
+        const weightLimits = bscPercentages[jobClassification] || bscPercentages['Rank-and-File'];
+        
+        // Determine category based on section
         const isLearningSection = $row.closest('#goalBodyLearning').length > 0;
         const isStrategicSection = $row.closest('#goalBodyStrategic').length > 0;
         const isOperationalSection = $row.closest('#goalBodyOperational').length > 0;
         
-        // Determine category/category based on section
-        let category;
-        if (isLearningSection) category = 'learning';
-        else if (isStrategicSection) category = 'strategic';
-        else if (isOperationalSection) category = 'operational';
-        else category = 'financial';
+        let category, categoryKey;
+        if (isLearningSection) {
+            category = 'learning';
+            categoryKey = 'Learning';
+        } else if (isStrategicSection) {
+            category = 'strategic';
+            categoryKey = 'Strategic';
+        } else if (isOperationalSection) {
+            category = 'operational';
+            categoryKey = 'Operational';
+        } else {
+            category = 'financial';
+            categoryKey = 'Financial';
+        }
+
+        const weightLimit = weightLimits[categoryKey];
         
         // Get current weights by perspective
-            ajaxRequest('/scorecard2/getWeightsByPerspective', {
-                employee_id: employeeId,
-                evaluation_period: $('#evaluation_period').val() || '2025'
-            }, function(res) {
-                if (res.status === 'success') {
-                    const weights = res.data;
-                    const classification = $('#job_classification').val() || 'Rank-and-File';
-                    const limits = bscPercentages[classification];
-                    
-                    // Get weight limit for current category
-                    const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
-                    const weightLimit = limits[categoryName];
-                    
-                    // Calculate total weight for this category excluding current goal
-                    const otherGoalsWeight = (weights[category] || 0) - (parseFloat($row.attr('data-original-weight')) || 0);
-                    const totalWeight = otherGoalsWeight + currentWeight;
-                    
-                    if (totalWeight > weightLimit) {
-                        const maxAllowed = weightLimit - otherGoalsWeight;
-                        $(this).val(maxAllowed.toFixed(2));
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Weight Limit Exceeded',
-                            text: `Total weight for ${categoryName} cannot exceed ${weightLimit}%. Maximum allowed for this goal: ${maxAllowed.toFixed(2)}%`,
-                            timer: 3000,
-                            showConfirmButton: false
-                        });
-                    }
+        ajaxRequest('/scorecard2/getWeightsByPerspective', {
+            employee_id: employeeId,
+            evaluation_period: $('#evaluation_period').val() || '2025'
+        }, function(res) {
+            if (res.status === 'success') {
+                const weights = res.data;
+                
+                // Calculate total weight excluding current goal
+                const otherGoalsWeight = (weights[category] || 0) - (parseFloat($row.attr('data-original-weight')) || 0);
+                const totalWeight = otherGoalsWeight + currentWeight;
+                
+                if (totalWeight > weightLimit) {
+                    const maxAllowed = weightLimit - otherGoalsWeight;
+                    $input.val(maxAllowed > 0 ? maxAllowed.toFixed(2) : '0.00');
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Weight Limit Exceeded',
+                        text: `Total weight for ${categoryKey} cannot exceed ${weightLimit}% for ${jobClassification}. Maximum allowed for this goal: ${maxAllowed.toFixed(2)}%`,
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
                 }
-            });
+            }
+        });
+
+
+        
+        // Get job classification and corresponding limits
         
         updateRowCalculations($row);
         setTimeout(updateTotals, 300);
@@ -933,130 +1111,136 @@ $(document).ready(function() {
     });
     
     // Initialize
-    if (!$('#scorecardTable tbody tr').length) addInitialRow();
-    else initSavedGoals();
-});      
+        if (!$('#scorecardTable tbody tr').length) addInitialRow();
+        else initSavedGoals();
+    });     
+     
    
 
 
 
 
     // start of scorecard
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize all KRA sections
-        initializeKRASection('goalBody', 'weightTotal', 'scoreTotal', 'addKRABtn', 'removeKRABtn', 'kraRowTemplate', 'goalRowTemplate');
-        initializeKRASection('goalBodyStrategic', 'weightTotalStrategic', 'scoreTotalStrategic', 'addKRABtnStrategic', 'removeKRABtnStrategic', 'kraRowTemplateStrategic', 'goalRowTemplateStrategic');
-        initializeKRASection('goalBodyOperational', 'weightTotalOperational', 'scoreTotalOperational', 'addKRABtnOperational', 'removeKRABtnOperational', 'kraRowTemplateOperational', 'goalRowTemplateOperational');
-        initializeKRASection('goalBodyLearning', 'weightTotalLearning', 'scoreTotalLearning', 'addKRABtnLearning', 'removeKRABtnLearning', 'kraRowTemplateLearning', 'goalRowTemplateLearning');
-        
-        function initializeKRASection(bodyId, weightTotalId, scoreTotalId, addKRABtnId, removeKRABtnId, kraRowTemplateId, goalRowTemplateId) {
-            const body = document.getElementById(bodyId);
-            const wtCell = document.getElementById(weightTotalId);
-            const scoreTotal = document.getElementById(scoreTotalId);
-            const btnAddKRA = document.getElementById(addKRABtnId);
-            const btnRemoveKRA = document.getElementById(removeKRABtnId);
-            const kraRowTemplate = document.getElementById(kraRowTemplateId);
-            const goalRowTemplate = document.getElementById(goalRowTemplateId);
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize all KRA sections
+            initializeKRASection('goalBody', 'weightTotal', 'scoreTotal', 'addKRABtn', 'removeKRABtn', 'kraRowTemplate', 'goalRowTemplate');
+            initializeKRASection('goalBodyStrategic', 'weightTotalStrategic', 'scoreTotalStrategic', 'addKRABtnStrategic', 'removeKRABtnStrategic', 'kraRowTemplateStrategic', 'goalRowTemplateStrategic');
+            initializeKRASection('goalBodyOperational', 'weightTotalOperational', 'scoreTotalOperational', 'addKRABtnOperational', 'removeKRABtnOperational', 'kraRowTemplateOperational', 'goalRowTemplateOperational');
+            initializeKRASection('goalBodyLearning', 'weightTotalLearning', 'scoreTotalLearning', 'addKRABtnLearning', 'removeKRABtnLearning', 'kraRowTemplateLearning', 'goalRowTemplateLearning');
             
-            // Skip initialization if any required element is missing
-            if (!body || !wtCell || !scoreTotal || !btnAddKRA || !btnRemoveKRA || !kraRowTemplate || !goalRowTemplate) {
-                console.warn(`Skipping initialization for ${bodyId} - missing required elements`);
-                return;
-            }
-            
-            let kraCount = 0;    // Track number of KRAs
-            let goalsByKRA = {}; // Track goals per KRA
-            
-            function addKRASection() {
-                kraCount++;
-                const kraId = bodyId + '-kra-' + kraCount;
-                goalsByKRA[kraId] = 0;
-                const tr = kraRowTemplate.content.cloneNode(true).querySelector('tr');
-                tr.dataset.kraId = kraId;
-                const kraCell = tr.querySelector('.kra-cell');
-                kraCell.dataset.kraId = kraId;
-                setupRowEventListeners(tr, kraId);
-               body.appendChild(tr);
+            function initializeKRASection(bodyId, weightTotalId, scoreTotalId, addKRABtnId, removeKRABtnId, kraRowTemplateId, goalRowTemplateId) {
+                const body = document.getElementById(bodyId);
+                const wtCell = document.getElementById(weightTotalId);
+                const scoreTotal = document.getElementById(scoreTotalId);
+                const btnAddKRA = document.getElementById(addKRABtnId);
+                const btnRemoveKRA = document.getElementById(removeKRABtnId);
+                const kraRowTemplate = document.getElementById(kraRowTemplateId);
+                const goalRowTemplate = document.getElementById(goalRowTemplateId);
                 
-                goalsByKRA[kraId]++;
-                
-                return kraId;
-            }
-            
-            function setupRowEventListeners(row, kraId) {
-                // Add button event
-                const addBtn = row.querySelector('.add-goal-btn');
-                if (addBtn) {
-                    addBtn.addEventListener('click', function() {
-                        addGoalRow(kraId);
-                    });
-                }
-                
-                // Remove button event
-                const removeBtn = row.querySelector('.remove-goal-btn');
-                if (removeBtn) {
-                    removeBtn.addEventListener('click', function() {
-                        removeGoalRow(kraId);
-                    });
-                }
-                
-                // Save button event
-                const saveBtn = row.querySelector('.save-goal-btn');
-                if (saveBtn) {
-                    saveBtn.addEventListener('click', function() {
-                    });
-                }
-                
-                // Update button event
-                const updateBtn = row.querySelector('.update-goal-btn');
-                if (updateBtn) {
-                    updateBtn.addEventListener('click', function() {
-                    });
-                }
-            }
-            
-            function removeKRASection() {
-                if (kraCount <= 1) {
-                    alert('Cannot remove the last KRA section.');
+                // Skip initialization if any required element is missing
+                if (!body || !wtCell || !scoreTotal || !btnAddKRA || !btnRemoveKRA || !kraRowTemplate || !goalRowTemplate) {
+                    console.warn(`Skipping initialization for ${bodyId} - missing required elements`);
                     return;
                 }
-            
-                const kraIds = Array.from(body.querySelectorAll('tr[data-kra-id]'))
-                    .map(row => row.dataset.kraId)
-                    .filter((value, index, self) => self.indexOf(value) === index); // Get unique KRA IDs
-                if (kraIds.length > 0) {
-                    const lastKraId = kraIds[kraIds.length - 1];
-                    const rows = Array.from(body.querySelectorAll(`tr[data-kra-id="${lastKraId}"]`));
-                    rows.forEach(row => row.remove());
-                    delete goalsByKRA[lastKraId];
-                    kraCount--;
+                
+                let kraCount = 0;    // Track number of KRAs
+                let goalsByKRA = {}; // Track goals per KRA
+                
+                function addKRASection() {
+                    kraCount++;
+                    const kraId = bodyId + '-kra-' + kraCount;
+                    goalsByKRA[kraId] = 0;
+                    const tr = kraRowTemplate.content.cloneNode(true).querySelector('tr');
+                    tr.dataset.kraId = kraId;
+                    const kraCell = tr.querySelector('.kra-cell');
+                    kraCell.dataset.kraId = kraId;
+                    setupRowEventListeners(tr, kraId);
+                body.appendChild(tr);
+                    
+                    goalsByKRA[kraId]++;
+                    
+                    return kraId;
+                }
+                
+                function setupRowEventListeners(row, kraId) {
+                    // Add button event
+                    const addBtn = row.querySelector('.add-goal-btn');
+                    if (addBtn) {
+                        addBtn.addEventListener('click', function() {
+                            addGoalRow(kraId);
+                        });
+                    }
+                    
+                    // Remove button event
+                    const removeBtn = row.querySelector('.remove-goal-btn');
+                    if (removeBtn) {
+                        removeBtn.addEventListener('click', function() {
+                            removeGoalRow(kraId);
+                        });
+                    }
+                    
+                    // Save button event
+                    const saveBtn = row.querySelector('.save-goal-btn');
+                    if (saveBtn) {
+                        saveBtn.addEventListener('click', function() {
+                        });
+                    }
+                    
+                    // Update button event
+                    const updateBtn = row.querySelector('.update-goal-btn');
+                    if (updateBtn) {
+                        updateBtn.addEventListener('click', function() {
+                        });
+                    }
+                }
+                
+                function removeKRASection() {
+                    if (kraCount <= 1) {
+                        alert('Cannot remove the last KRA section.');
+                        return;
+                    }
+                
+                    const kraIds = Array.from(body.querySelectorAll('tr[data-kra-id]'))
+                        .map(row => row.dataset.kraId)
+                        .filter((value, index, self) => self.indexOf(value) === index); // Get unique KRA IDs
+                    if (kraIds.length > 0) {
+                        const lastKraId = kraIds[kraIds.length - 1];
+                        const rows = Array.from(body.querySelectorAll(`tr[data-kra-id="${lastKraId}"]`));
+                        rows.forEach(row => row.remove());
+                        delete goalsByKRA[lastKraId];
+                        kraCount--;
+                    }
+                }
+                btnAddKRA.addEventListener('click', function() {
+                    addKRASection();
+                });           
+                btnRemoveKRA.addEventListener('click', function() {
+                    removeKRASection();
+                });
+                addKRASection();
+
+                // Add initial row if no rows exist in the section
+                if (bodyId === 'goalBodyLearning' && body.children.length === 0) {
+                    const initialRow = goalRowTemplate.content.cloneNode(true).querySelector('tr');
+                    initialRow.dataset.kraId = bodyId + '-kra-1';
+                    body.appendChild(initialRow);
+                    setupRowEventListeners(initialRow, initialRow.dataset.kraId);
                 }
             }
-            btnAddKRA.addEventListener('click', function() {
-                addKRASection();
-            });           
-            btnRemoveKRA.addEventListener('click', function() {
-                removeKRASection();
-            });
-            addKRASection();
-        }
+            
+
         
-
-    
-        var coll = document.getElementsByClassName("collapsible");
-        var i;
-        for (i = 0; i < coll.length; i++) {
-            coll[i].addEventListener("click", function() {
-                this.classList.toggle("active");
-                var content = this.nextElementSibling;
-                if (content.style.display === "block") {
-                    content.style.display = "none";
-                } else {
-                    content.style.display = "block";
-                }
-            });
-        }
-
+            var coll = document.getElementsByClassName("collapsible");
+            var i;
+            for (i = 0; i < coll.length; i++) {
+                coll[i].addEventListener("click", function() {
+                    this.classList.toggle("active");
+                    var content = this.nextElementSibling;
+                    if (content.style.display === "block") {
+                        content.style.display = "none";
+                    } else {
+                        content.style.display = "block";
+                    }
+                });
+            }
     });
-    // end of scorecard
-   
